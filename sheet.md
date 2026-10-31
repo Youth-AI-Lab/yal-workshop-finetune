@@ -26,26 +26,29 @@ Full page: [README.md](README.md). Setup and common problems: [SETUP.md](SETUP.m
 
 ## 3. Write your examples, and a test for another pair (25 min)
 
-1. At least **10 messages per class** in `messages/examples.md`, in your language, real-sounding, with
-   hard cases. Headings unchanged, each message starts with `- `. Check the heading above each line: the end of the file is `## off-topic`. No personal information.
+1. At least **10 messages per class** in `messages/examples.md`, in your language, real-sounding, 15 words
+   at most, with hard cases. Headings unchanged, each message starts with `- `. Check the heading above each line: the end of the file is `## off-topic`. No personal information.
 2. On paper: **3 messages per class for another pair**. Swap.
 3. Type the other pair's messages into `messages/test.md`. **Never** put a test message in the examples.
 
-## 4. Fine-tune, test, improve (25 min)
+## 4. Fine-tune, test, improve (30 min)
 
-1. Predict the score. `./sorter baseline` again.
-2. `./sorter train` (1 to 2 min), then `./sorter test`. Both scores on the board.
+1. Read "What do you train?" and "How does the training work?" (about 4 min). Predict the score.
+   `./sorter baseline` again.
+2. `./sorter train` (1 to 2 min): watch the big screen while it runs. Then `./sorter test`. Both scores on
+   the board, with the emergencies missed.
    `ls -la ~/.workshop-finetune/model`: the body (`model.safetensors`, about 470 MB) and the head
    (`model_head.pkl`, about 7 KB). The `README.md` of this folder quotes some of your examples.
-3. For each mistake, add 2 or 3 examples that look like it. Train and test again. This second score is
-   no longer an honest test: you tuned the examples on it.
-4. `./sorter try`, then type the facilitator's hard messages, one per line (an empty line stops). Do not
+3. No mistake? Go to 4. Otherwise take 2 mistakes at most, emergencies first, and add 2 examples that look
+   like each one. Train and test again. This second score is no longer an honest test: you tuned the
+   examples on it.
+4. `./sorter try`, then paste the facilitator's hard messages, one per line (an empty line stops). Do not
    put them on the command line: a `!` between double quotes makes the terminal wait with `dquote>`.
 
 ## 5. The big model, without training (15 min)
 
 1. `./sorter claude`: Claude sorts the same test from a description of the classes, no examples.
-2. Fill in the table: right answers, emergencies missed, time, cost per 1,000 messages, network,
+2. Fill in the table: right answers and emergencies missed (of your first training), time, cost per 1,000 messages, network,
    where the message goes, what it took to set up.
 
 ## 6. Closing (15 min)
