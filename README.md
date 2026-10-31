@@ -28,7 +28,7 @@
 - [Part 1 - Welcome (15 min)](#part-1---welcome-15-min)
 - [Part 2 - A model that has learned nothing yet (★, 15 min)](#part-2---a-model-that-has-learned-nothing-yet--15-min)
 - [Part 3 - Write your examples, and a test for another pair (★★, 25 min)](#part-3---write-your-examples-and-a-test-for-another-pair--25-min)
-- [Part 4 - Fine-tune, test, improve (★★, 25 min)](#part-4---fine-tune-test-improve--25-min)
+- [Part 4 - Fine-tune, test, improve (★★, 30 min)](#part-4---fine-tune-test-improve--30-min)
 - [Part 5 - The big model, without training (★★★, 15 min)](#part-5---the-big-model-without-training--15-min)
 - [Part 6 - Closing (15 min)](#part-6---closing-15-min)
 - [Troubleshooting](#troubleshooting)
@@ -77,7 +77,7 @@ deserve the same treatment:
 | `urgent` | "There is smoke coming from the woods behind my house!" | a fixed safety answer, at once, with no AI in the way |
 | `off-topic` | "Can you help me with my maths homework?" | a polite refusal that still gives the emergency number, without spending tokens |
 
-A sorter placed **before** the chatbot does this in a few milliseconds, for free, and without
+A sorter placed **before** the chatbot does this in a few milliseconds, at no cost per message, and without
 sending the message anywhere.
 
 The question of the series was: **what enters the model's context, when, and who decides?** Today's
@@ -125,7 +125,7 @@ All of these are in your Codespace, in the file list on the left:
   today.
 - `messages/test.md`: the test messages. The model never sees them while it learns.
 - `sorter`: the command of the day (type `./sorter` to see what it can do).
-- `tools/sorter.py`: the program behind it, about 400 lines of Python, if you are curious.
+- `tools/sorter.py`: the program behind it, about 450 lines of Python, if you are curious.
 - `SETUP.md`: setup and common problems of the whole series (steps 1 to 3 and 6, today).
 
 ---
@@ -209,8 +209,8 @@ paraphrase is the same idea in other words. Its page does not say which texts it
 It does one thing: it turns a sentence into a list of 384 numbers. Think of these numbers as an
 address on a map of meaning. An address on a paper map has two numbers; this one has 384, so nobody
 can draw the map, but the idea is the same: **two sentences with the same meaning get close
-addresses**, whatever their words and their language. Closeness goes from about 0 (nothing in
-common) to 1 (the same meaning). In our test:
+addresses**, whatever their words and their language. Closeness goes from about 0 (nothing in common) to 1 (the same meaning). This is not the scale of workshop 2, where 0.5 already
+meant no link. In our test:
 
 | Sentence | Compared with "Is the forest closed today?" | Closeness |
 |---|---|---|
@@ -223,6 +223,11 @@ shows its limit: the model gives more weight to "forest" and "today" than to "op
 that does not matter, because both are questions about today. That is all it knows. It knows nothing
 about fire safety, and it does not write.
 
+Do not mix up two kinds of numbers. The 117,653,760 parameters are the model itself: they stay the
+same from one sentence to the next, and only training changes them. The 384 numbers of the address
+are a result: the model computes a new list for each sentence. Training changes the first kind, and
+that is why the second kind comes out different.
+
 **Key insight:** you are not building a model today. You start from one that already knows how close
 two sentences are, and you teach it something it does not know yet: your four classes.
 
@@ -234,7 +239,7 @@ two sentences are, and you teach it something it does not know yet: your four cl
 ## Part 2 - A model that has learned nothing yet (★, 15 min)
 
 > **Goal**: see what the model does with no training at all, and learn to read a confusion table.
-> This first score is your starting point: without it, you could not say what training brought.
+> This first score, the baseline, is your starting point: without it, you could not say what training brought.
 
 ### What you will discover
 
@@ -353,11 +358,12 @@ do?"), an off-topic message about fire ("light my birthday candles?"), a `today`
 not say "today" ("can we barbecue this weekend?"). Finally, write **no personal information**: no
 names, no addresses, nothing about a real person.
 
-> ℹ️ **Note.** **A long message is hard to sort.** The model gives an address to each token (a word or a part of a word) of the message, then takes the average, so one urgent sentence is drowned in a long message. This happens
-> well before the limit of 128 tokens (about 100 words in English), after which the model reads nothing at all. In 240 messages we wrote by hand, each with an emergency inside a longer text, reading the whole message found only 62.
-> So `./sorter try` does two more things. In a message of several sentences, it also reads each sentence
-> alone, and a sentence at 0.5 or more in `urgent` gets the safety answer. And a message of more than 15
-> words with no sure emergency is not sorted: it goes to the chatbot. With punctuation, all 240 emergencies got the safety answer. Without punctuation, 29 did and 211 went to the chatbot, whose own instructions must then cover emergencies (we did not measure this part). And some long prevention questions get the safety answer by mistake (6 of the 8 we tried). Keep your examples and your test messages to 15 words at most: `./sorter test` tells you when a test message is too long to sort, but it does not check your examples, so count their words yourself.
+> ℹ️ **Note.** **Keep each message to 15 words at most.** The model gives an address to each token (a
+> word or a part of a word), then takes the average, so one urgent sentence is drowned in a long
+> message. This happens well before the limit of 128 tokens (about 100 words in English), where the
+> model stops reading. `./sorter test` tells you when a test message is too long to sort. It does not
+> check your examples, so count their words yourself. Troubleshooting says what the sorter does with a
+> long message.
 
 ### What to do
 
@@ -379,8 +385,8 @@ like them. Someone else writes the way real users do, with words you did not exp
 > of 32). A wrong heading teaches the wrong thing, and nothing warns you.
 
 > ⚠️ **Important.** **The golden rule: a test message never goes into the examples.** Otherwise the
-> test measures memory, not understanding. If a test message is also an example, `./sorter train`
-> warns you.
+> test measures memory, not understanding. If a test message is also an example, word for word, `./sorter train`
+> warns you. A sentence you reworded is not caught.
 
 > 💡 **Tip.** **Checkpoint**: `examples.md` has at least 20 messages per class (10 from the start, 10
 > of yours), and `test.md` has the messages of another pair.
@@ -392,7 +398,7 @@ like them. Someone else writes the way real users do, with words you did not exp
 
 ---
 
-## Part 4 - Fine-tune, test, improve (★★, 25 min)
+## Part 4 - Fine-tune, test, improve (★★, 30 min)
 
 > **Goal**: fine-tune the model on your examples, understand what changed inside it, see what it
 > learned, and make it better.
@@ -401,17 +407,20 @@ like them. Someone else writes the way real users do, with words you did not exp
 
 - A sorter has two parts, and training changes both, in two different ways.
 - Fine-tuning a small model takes one or two minutes, on the processors of the Codespace.
-- Training follows one number, the training score, and lowers it round after round, until a number
-  of rounds fixed in advance.
+- The training of the body follows one number, the training score, and brings it down over the
+  rounds, until a number of rounds fixed in advance.
 - A lower training score does not always mean a better sorter.
 - The confusion table tells you which examples to write next.
-- A second round of examples can improve the model, but it also spoils your test.
+- A second set of examples can improve the model, but it also spoils your test.
 
 ### What do you train?
 
+> ℹ️ **Note.** Read this section and the next one with your partner before step 1 of "What to do". They
+> explain what `./sorter train` is going to do.
+
 The sorter has two parts. The **body** is the model you met in Part 1, which turns a sentence into 384
 numbers. The **head** is a very small model that you add on top of it. It reads these 384 numbers and
-gives one score per class. The body knows about language, and the head knows about your four classes.
+gives one value per class. The body knows about language, and the head knows about your four classes.
 
 | | The body | The head |
 |---|---|---|
@@ -434,24 +443,24 @@ flowchart TD
   H --> S["The sorter: body + head"]
 ```
 
-**First, the body, with pairs.** The body gives addresses, not classes, so you cannot ask it "which
+**First, the body, with pairs of messages.** The body gives addresses, not classes, so you cannot ask it "which
 class is this?". You can only ask "are these two close?". Pairs turn your examples into that question,
-and they turn a few examples into many training rounds. From 40 examples, it makes 800 pairs: 400 of the same class, and 400 of different classes (some
-same-class pairs come twice, so 620 pairs are different).
+and they turn a few examples into many training rounds. From 40 examples, it makes 800 pairs: 400 of the same class, and 400 of different classes.
 For each pair it knows the target: closeness 1 for the same class, 0 for different classes. It takes
 16 pairs at a time, measures how far their closeness is from the target, and changes the numbers of
 the body a tiny bit. This is the loop of Part 1. With 800 pairs, 16 at a time, there are **50 rounds**,
 the number on the long progress bar. Each example gives 20 pairs, so twice as
 many examples take about twice as long.
 
-**Then, the head, with borders.** Now the addresses are better. SetFit computes the address of each
-example, then fits the head, which is one set of 385 numbers per class: 4 × 385, or 1,540. This step
-is a classic calculation that takes about a second, and it has no bar of its own. The head draws the
-borders between the four classes on the map of meaning. For each class, it gives a weight to each of
-the 384 numbers of the address, plus one starting value. It multiplies, adds, and that is the score
-of the class. For a new message, it gives four shares that
-add up to 1. The largest gives the class, and it is the **confidence** that `./sorter try` shows. At 0.98,
-almost everything goes to one class. At 0.46, the sorter hesitates: the other classes share the rest.
+**Then, the head, with borders.** Now the addresses are better, and the body stops changing. SetFit
+computes the address of each example, then trains the head on these addresses. The head draws the
+borders between the four classes on the map of meaning. It holds 385 numbers per class, 4 × 385 or
+1,540 in all: one weight for each of the 384 numbers of the address, plus one starting value. Training
+looks for the numbers that give the largest share to the right class of each example. This is a
+classic calculation called logistic regression. It takes about a second, and it has no bar of its
+own. For a new message, the head gives four shares that add up to 1. The largest gives the class, and
+it is the **confidence** that `./sorter try` shows. At 0.98, almost everything goes to one class. At
+0.46, the sorter hesitates: the other classes share the rest.
 
 **Key insight:** the numbers of the model do not store your sentences. What remains of your examples
 is numbers that moved. That is why a fine-tuned model cannot quote a source, and why a mistake is
@@ -459,18 +468,20 @@ corrected by changing the examples and training again.
 
 ### How does the training know that it is improving?
 
-> ℹ️ **Note.** The facilitator presents this section and the next one on the big screen. You do not
-> need to read them during the session: come back to them after the workshop.
+> ℹ️ **Note.** Before this section, do steps 1 to 3 of "What to do". The facilitator presents this
+> section and the next one on the big screen while your first training runs. You do not need to read
+> them during the session: come back to them after the workshop.
 
 The loop of Part 1 asks "how wrong is it?". To answer, training needs one number, computed in the same
 way every round. This number is the **training score**. In machine learning it is called the **loss function**;
 in other fields, you may meet the same idea as a **fitness function**. Here, a lower score is better,
-and 0 would be perfect. Choosing this score means choosing what "better" means, because the training
+and 0 would be perfect. (The score of your test, like 28 of 32, works the other way: higher is better.)
+Choosing this score means choosing what "better" means, because the training
 will do anything that lowers it, and nothing else.
 
 For one pair, the score takes three steps. Take the closeness of the two messages, subtract the target (1 for the same class, 0 for different classes), and multiply this gap by itself. Here are two real pairs from the 40 examples, before and after the training:
 
-| Two messages | Target | Closeness before | Score before | Closeness after | Score after |
+| Two messages | Target | Closeness before | Training score before | Closeness after | Training score after |
 |---|---|---|---|---|---|
 | "Je me sens très mal et je ne sais pas à qui parler" / "Help, the field next to us is on fire" | 1 | 0.144 | 0.73 | 0.522 | 0.23 |
 | "What is the fire danger level today?" / "How can I protect my garden from wildfires?" | 0 | 0.525 | 0.28 | 0.195 | 0.04 |
@@ -478,11 +489,11 @@ For one pair, the score takes three steps. Take the closeness of the two message
 Multiplying the gap by itself makes big gaps count much more than small ones: a gap of 0.8 costs 0.64,
 and a gap of 0.2 costs 0.04, sixteen times less. So the pairs that are furthest from their target push the numbers hardest. The score of a round is the average over its 16 pairs.
 
-Then the numbers change. For each of the 117 million numbers, a calculation gives the **gradient**: the
-slope of the score for this number, which says in which direction the score goes down, and how fast.
-Each number then takes a very small step downhill. This is called **gradient descent**. Think of
+Then the numbers change. For each number, a calculation gives the **gradient**: the slope of the score
+for this number, which says in which direction the score goes down, and how fast. Each number with a
+slope then takes a very small step downhill. This is called **gradient descent**. Think of
 walking down a hill in thick fog: you cannot see the valley, you only feel the slope under your feet,
-so you take one small step downhill, then feel the slope again. The general size of the steps is a setting fixed in advance. Here, this setting rises to 0.00002 in the first rounds, then falls towards zero, so that the last
+so you take one small step downhill, then feel the slope again. The general size of the steps is a setting fixed in advance. Here, this setting rises in the first rounds, then falls towards zero, so that the last
 rounds only make fine adjustments. The head has its own score, computed differently, with the same
 idea: give the largest possible share to the right class of each example.
 
@@ -492,13 +503,19 @@ Nothing decides along the way that the model is good enough: the number of round
 rounds for 40 examples, and 100 for 80. That keeps the training to a minute or two.
 
 In larger trainings, people set some messages aside, compute the score on them regularly, and stop
-when this score no longer goes down. We tried the first part by hand, without stopping anything: we computed the score on the same pairs all along, for the 40 examples and for the 32 test messages, in the training of
-`./sorter train`, then in a longer one of 200 rounds:
+when this score no longer goes down. We stopped nothing here: we only watched. We computed the score
+on the same pairs all along, once for the 40 examples and once for the 32 test messages, in a training
+with the settings of `./sorter train`, then in a longer one of 200 rounds. Do not use your own test
+this way: choosing the number of rounds from your test would tune the model on it, as in step 7.
 
 ![Two charts with the same vertical scale, up to round 50 on the left and round 200 on the right. With 50 rounds, the score of the pairs of the examples goes down from 0.27 to 0.12, and the score of the pairs of the test messages from 0.28 to 0.19; the test gives 32 of 32, with no emergency missed. With 200 rounds, the examples go down to almost 0 and the test messages to 0.07, then flatten; the test gives 30 of 32, with 1 emergency missed.](images/training-score.png)
 
 The blue line is what the model learns from, and the orange line is what it never saw. They start
-together, then they part: the model always does better on its own examples. With 200 rounds, the blue line reaches almost 0: the model has nearly learned these 40 examples by heart. When a model keeps improving on its examples but gets worse on new messages, this is called **overfitting**. The orange line does not show it here, because it keeps falling: only the 30 of 32 below may be a first sign. The orange line almost stops falling after about 150 rounds. We did not go further, so we cannot say what more rounds would bring. The left chart also flattens at its end, because the steps fall towards zero.
+together, then they part: the model always does better on its own examples. With 200 rounds, the blue line reaches almost 0: the model has nearly learned these 40 examples by heart.
+
+When a model keeps improving on its examples but gets worse on new messages, this is called **overfitting**. The orange line does not show it here, because it keeps falling: only the 30 of 32 below may be a first sign.
+The orange line almost stops falling after about 150 rounds. We did not go further, so we cannot say what more rounds would bring. The left chart also flattens at its end, because the steps fall towards zero. On the
+long training, they stay large for longer, so its lines are lower at round 50.
 
 Now read the top right corner of each chart. After 200 rounds, the training score is much lower, but on these 32
 test messages the sorter does worse: 30 of 32 with 1 emergency missed, against 32 of 32 and none after
@@ -513,7 +530,8 @@ never saw, tells you whether the sorter got better, and you decide when it is go
 
 1. **Before you start, predict** on paper: how many test messages will be right, and how many
    emergencies missed?
-2. Run the baseline again, on your new test, to get your starting point:
+2. Run the baseline again, on your new test, to get your starting point. Write down the score and the
+   line `Emergencies missed`:
 
    ```bash
    ./sorter baseline
@@ -525,8 +543,9 @@ never saw, tells you whether the sorter got better, and you decide when it is go
    ./sorter train
    ```
 
-   While it runs, read "What the training changes", below, as far as the map, and read the rest during
-   your second training. **What you should see:**
+   While it runs, watch the big screen: the long bar on your terminal counts the rounds the facilitator
+   explains. During your second training, read "What the training changes", below, as far as the map.
+   **What you should see:**
    `Fine-tuning on … examples (topic …, today …, urgent …, off-topic …)…`, a few progress bars (the
    long one counts the rounds: 50 for 40 examples, 100 for 80), then `Fine-tuned in … s`. In our tests
    on 2026-10-31: about a minute with the 40 starting examples (60 to 65 s), about two minutes with
@@ -545,14 +564,17 @@ never saw, tells you whether the sorter got better, and you decide when it is go
 
    ![The result of ./sorter test with the messages of the repository: 32 of 32 messages in the right class. 1: the line Emergencies missed, here 0. 2: the line Not sure, for 2 messages.](images/sorter-test.png)
 
-   `Not sure (below 0.5)` counts the messages with a low confidence that were not sorted as `urgent`,
+   On your own test, you will probably see mistakes. Here, the number in brackets is not a closeness any
+   more: it is the confidence of the sorter. `Not sure (below 0.5)` counts the messages with a low confidence that were not sorted as `urgent`,
    whether their class is right or not. Step 8 explains what a chatbot does with them.
 
    > ℹ️ **Note.** **Our 32 of 32 says little.** These test messages were written together with the
    > examples. Your test, written by another pair, is the one that counts: expect a lower score.
 
-5. **Compare** with the baseline and with your prediction. Write both scores on the board.
-6. **Look at what the training made.** Type:
+5. **Compare** with the baseline and with your prediction. Read `Emergencies missed` first, then the
+   cells of the table that changed. Your test has 12 messages, so one or two messages prove little.
+   Write both scores on the board, with the emergencies missed.
+6. **Look at what the training made.** The facilitator shows this once on the big screen, with:
 
    ```bash
    ls -la ~/.workshop-finetune/model
@@ -565,7 +587,8 @@ never saw, tells you whether the sorter got better, and you decide when it is go
    > description, `README.md`, that quotes some examples: 16 of the 40 in our test. The model never
    > reads this file, but anyone who receives the folder can. It is one more reason to write no
    > personal information in your examples.
-7. **Improve**: for each mistake, add two or three examples that look like it (not the test message
+7. **Improve**: no mistake? Go to step 8. Otherwise look at the `Mistakes:` lines and take two of them
+   at most, emergencies first. For each one, add two examples that look like it (not the test message
    itself) under the right heading. Fine-tune and test again: each training starts again from the original
    model, with all your examples. Write the second score.
 
@@ -574,7 +597,8 @@ never saw, tells you whether the sorter got better, and you decide when it is go
    > really worth, it needs messages that nobody in your pair has seen: the hard messages of the
    > facilitator, in step 8.
 
-8. **Try new messages**: the hard messages of the facilitator first, then your own. Type:
+8. **Try new messages**: the hard messages of the facilitator first, then your own. If you work alone,
+   ask someone who has not seen your examples to write them. Type:
 
    ```bash
    ./sorter try
@@ -587,8 +611,8 @@ never saw, tells you whether the sorter got better, and you decide when it is go
 
    ![./sorter try with three messages. A message about smoke behind a school: urgent, confidence 0.98. The message help!!: off-topic, confidence 0.54, a refusal that still gives the emergency number. A message of distress: urgent, confidence 0.46, not sure, but the safety answer all the same.](images/sorter-try.png)
 
-   Below 0.5, the sorter is not sure: the message goes to the chatbot, except a possible emergency,
-   which always gets the safety answer. Notice "help!!": the sorter chose `off-topic`, a real mistake,
+   Below 0.5, the sorter is not sure: the message goes to the chatbot. The exception is a message of 15
+   words or fewer sorted as `urgent`: it gets the safety answer all the same. Notice "help!!": the sorter chose `off-topic`, a real mistake,
    and the fixed answer still gives the emergency number. Confidence says how sure the sorter is, not
    whether it is right.
 
@@ -598,9 +622,12 @@ never saw, tells you whether the sorter got better, and you decide when it is go
 
 ### What the training changes
 
-We measured what the training changed in the body, with the 40 starting examples. **It changes almost
-every number, and each one very little**: 99.9% of the numbers moved, the total change is about 0.1%
-of their total size, and the typical number moved much less (0.001%). Yet addresses move enough to
+We measured what the training changed in the body, with the 40 starting examples. Almost all the
+numbers moved (99.9%), but most of them learned nothing. About 96 million are a table with one line per
+token. Only 281 lines of this table, out of 250,037, are for tokens that appear in the 40 starting examples:
+they moved by about 0.4%. All the other lines have a slope of 0. They only shrink by a tiny amount
+(0.0005%), because of a setting of SetFit that pulls all the numbers towards zero. The 21 million
+numbers of the 12 layers that read the sentence moved by 0.27% to 0.46%. Yet addresses move enough to
 be seen:
 
 | Closeness, on average | Before training | After training |
@@ -628,7 +655,7 @@ map has really moved. Filled shapes are the messages it learned from, and empty 
 
 There are two limits. The pairs ask for closeness 1 or 0, and these small rounds do not get there: two
 examples of the same class end at 0.61. And not every pair moves the right way: `off-topic` came closer
-to `today` (0.15 to 0.28), the forest question and the maths homework went from 0.04 to 0.26, and a
+to `today` (0.15 to 0.28), "Is the forest closed today?" and the maths homework went from 0.04 to 0.26, and a
 `topic` question and an `urgent` message about a fire near a house stayed as close as before (0.70 to
 0.71).
 
@@ -641,7 +668,7 @@ The body does not do all the work either. We switched each part on and off, on t
 | The body after training, closest example, no head | 30 of 32 | 1 |
 | The body after training, with a trained head (`./sorter test`) | 32 of 32 | 0 |
 
-On these messages, the head brings most of the gain. A difference of one or two messages proves
+A difference of one or two messages proves
 nothing on 32 messages written together with the examples. Each part does its share, and a test lets
 you check it.
 
@@ -650,7 +677,7 @@ you check it.
 
 ### Think about it
 
-1. Did the second round of examples help? Which examples made the difference?
+1. Did the second set of examples help? Which examples made the difference?
 2. A score of 100% on your test: is the model perfect? What would you need to know more?
 3. The sorter makes a mistake on a real message. What exactly do you do to correct it, and where does
    the correction go?
@@ -673,7 +700,8 @@ you check it.
 Claude was trained once, by Anthropic, on a very large scale, and nobody changes it for you. To make
 it sort, you do what you did in workshop 1: you write instructions. `./sorter claude` sends it a short
 description of the four classes, then one test message, and asks for one word. The description
-enters the **context**, as your `AGENTS.md` did. You are back to the question of the series.
+enters the **context**, as your `AGENTS.md` did. You are back to the question of the series. To read
+this description, open `tools/sorter.py` and search for `CLAUDE_INSTRUCTIONS`.
 
 So the same knowledge, "what is an emergency for this chatbot", can live in two places:
 
@@ -707,17 +735,22 @@ can miss what its examples leave out. In both cases, only the test tells you.
    ![The result of ./sorter claude: 30 of 32 messages in the right class, and two emergencies sorted as off-topic. 1: the line Emergencies missed, here 2. 2: the line Time, with 0.8 s per message, the tokens, and an estimated cost of $0.0007.](images/sorter-claude.png)
 
    That is 0.8 to 0.9 s per message, $0.0007 for the 32 messages, so about $0.02 per 1,000 messages.
-2. Fill in the comparison on the board:
+2. Fill in the comparison on the board. For your model, write the score of your first training (step 5
+   of Part 4). After step 7, your model is tuned on these test messages, and Claude has never seen them.
 
    | | Your fine-tuned model | Claude, without training |
    |---|---|---|
    | Right answers on the test | | |
    | Emergencies missed | | |
    | Time per message | 7 to 9 ms | |
-   | Cost per 1,000 messages | nothing | |
+   | Cost per 1,000 messages | none per message | |
    | Works without the network | yes | no |
    | Where the message goes | stays in the Codespace | to Anthropic |
    | What it took to set up | your examples, one or two minutes of training | a description of the classes |
+
+> ⚠️ **Important.** **This cost is per message only.** In the Codespace, the sorter runs while you work.
+> In a real chatbot, it needs a computer that stays on, and someone to look after it. We did not measure
+> what this costs (TO BE COMPLETED). At our rate, Claude would cost about $0.20 for 10,000 messages.
 
 > ℹ️ **Note.** **What leaves the Codespace.** With Claude, every message is sent to Anthropic. With
 > your small model, nothing leaves: the model runs on the Codespace's processors. For messages that
@@ -743,7 +776,8 @@ can miss what its examples leave out. In both cases, only the test tells you.
 Here is what today's work does in a real chatbot. The **sorter sits before the chatbot**: `urgent`
 gets the safety answer at once, `off-topic` gets a refusal that costs nothing, `today` goes to the
 tool of workshop 4, and only `topic` reaches the big model. When the sorter is not sure, the message
-goes to the chatbot, except a possible emergency, which always gets the safety answer.
+goes to the chatbot. The exception is a message of 15 words or fewer sorted as `urgent`: it gets the
+safety answer all the same.
 
 A sorter makes mistakes, so **every fixed answer ends with the emergency number**: an emergency
 sorted as `off-topic` must still find help. **Feurisson's prototype** does part of this, with fixed
@@ -751,7 +785,8 @@ expressions for emergencies and a fine-tuned small model for its FAQ
 ([wikiyouthbot-feurisson](https://github.com/Youth-AI-Lab/wikiyouthbot-feurisson)).
 
 Your **examples and your test** stay useful: when the chatbot is online, the messages it got wrong
-become new examples, and the model is trained again. And **the method** works for any short list of
+become new examples, once a person has removed anything personal from them, and the model is trained
+again. And **the method** works for any short list of
 classes, in any of the model's languages: the kind of question, the topic, the tone.
 
 ### Step 2 - Keep your examples
@@ -787,6 +822,15 @@ few words:
 
 The common problems (key, Codespace, terminal) are in the
 [Troubleshooting of SETUP.md](SETUP.md#troubleshooting).
+
+**A message says `too long to sort`, or a long message gets the safety answer.** - A message of several
+sentences is also read sentence by sentence, and a sentence at 0.5 or more in `urgent` gets the safety
+answer. A message of more than 15 words with no sure emergency is not sorted: it goes to the chatbot.
+We hid 5 emergencies, which the sorter finds on their own, in longer texts, in 48 ways each, so 240
+messages. Read as a whole, 62 were found. With the sentence check and punctuation, all 240 got the
+safety answer. Without punctuation, 29 did, and 211 went to the chatbot, whose own instructions must
+then cover emergencies (we did not measure this part). And 6 of 8 long prevention questions got the
+safety answer by mistake. This shows how it works: it is not a detection rate.
 
 **`The libraries are not installed yet. Type: ./sorter setup`** - Type it, and wait for
 `Model ready`. Each new Codespace needs it once.
