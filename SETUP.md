@@ -1,6 +1,6 @@
 # Setup, commands and common problems
 
-The same for the five workshops of the series "Build your own chatbot" (Youth AI Lab, Erasmus+).
+The same for all the workshops of the series "Build your own chatbot" (Youth AI Lab, Erasmus+).
 The page of each workshop is its `README.md`.
 
 - [Before you start](#before-you-start)
@@ -182,6 +182,8 @@ Some commands take time. A second terminal lets you go on working in the first o
 
 ### Step 6 - Get ready for the workshop of the day
 
+> ℹ️ **Note.** **Workshop 6** stops at step 3: go back to its page, and type `./sorter setup`.
+
 **Type** `workshop-start` and the number of the workshop, written at the top of its README. For
 workshop 1:
 
@@ -238,7 +240,7 @@ Each word is explained again the first time a workshop uses it.
 
 | Word | What it means here |
 |---|---|
-| **Kit** | The repository with everything the five workshops use, in one place: [yal-workshop-kit](https://github.com/Youth-AI-Lab/yal-workshop-kit). Each workshop has its own repository, with only what it needs. |
+| **Kit** | The repository with everything the first five workshops use, in one place: [yal-workshop-kit](https://github.com/Youth-AI-Lab/yal-workshop-kit). Each workshop has its own repository, with only what it needs. |
 | **Model** | The program that writes the answers. Here: Claude Sonnet, the same for every pair. |
 | **Context** (or **context window**) | Everything the model reads before it answers. It has a maximum size: here, 200,000 tokens. |
 | **Token** | The unit used to measure text for a model: a piece of a word. On average, 4 characters of English text. |
