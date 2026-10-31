@@ -37,8 +37,7 @@ Full page: [README.md](README.md). Setup and common problems: [SETUP.md](SETUP.m
    `./sorter baseline` again.
 2. `./sorter train` (1 to 2 min): watch the big screen while it runs. Then `./sorter test`. Both scores on
    the board, with the emergencies missed.
-   `ls -la ~/.workshop-finetune/model`: the body (`model.safetensors`, about 470 MB) and the head
-   (`model_head.pkl`, about 7 KB). The `README.md` of this folder quotes some of your examples.
+   The `README.md` of the model folder (`~/.workshop-finetune/model`) quotes some of your examples.
 3. No mistake? Go to 4. Otherwise take 2 mistakes at most, emergencies first, and add 2 examples that look
    like each one. Train and test again. This second score is no longer an honest test: you tuned the
    examples on it.
