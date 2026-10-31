@@ -9,7 +9,7 @@ export HF_HUB_DISABLE_TELEMETRY=1 TOKENIZERS_PARALLELISM=false HF_HOME="$home/hu
 
 if [[ "${1:-}" == setup ]]; then
   start=$(date +%s)
-  echo "Installing the libraries (about 2 minutes, once per Codespace)…"
+  echo "Installing the libraries, then the model (about 2 min 30, once per Codespace)…"
   mkdir -p "$home"
   [[ -x "$python" ]] || python3 -m venv "$home/venv"
   "$home/venv/bin/pip" install -q --disable-pip-version-check -r "$here/tools/requirements.txt"

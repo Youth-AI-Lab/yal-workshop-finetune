@@ -56,14 +56,14 @@ before the chatbot sees them. The question of the day is:
 ### Why this approach?
 
 **Fine-tuning** means changing a model a little, with your own examples, so that it gets better at
-one task. On the slide of the earlier workshops, it was level 5: "a slide only". Fine-tuning a big
+one task. In workshop 5, it was only on a slide of the facilitator. Fine-tuning a big
 model that writes answers needs graphics cards, thousands of examples and days of work. And even
 fine-tuned, a model that writes can still invent.
 
 A **classifier** is different. It does not write: it only **chooses** one class among a few that you
 decide. So it cannot invent an answer. A small classifier (here, about 118 million parameters; the
 big chatbots are many times larger, and their makers do not publish their size) learns from a few
-dozen examples, in about a minute, on the two processors of your Codespace, with no graphics card.
+dozen examples, in one or two minutes, on the two processors of your Codespace, with no graphics card.
 
 The task of the day is a real one. Every chatbot receives four kinds of messages, and they do not
 all deserve the same treatment:
@@ -73,18 +73,25 @@ all deserve the same treatment:
 | `topic` | "How can I protect my garden from wildfires?" | answer, with its instructions and knowledge |
 | `today` | "What is the fire danger level today?" | ask a live tool, the official source of the day (workshop 4) |
 | `urgent` | "There is smoke coming from the woods behind my house!" | a fixed safety answer, at once, with no AI in the way |
-| `off-topic` | "Can you help me with my maths homework?" | a polite refusal, without spending tokens |
+| `off-topic` | "Can you help me with my maths homework?" | a polite refusal that still gives the emergency number, without spending tokens |
 
 A sorter placed **before** the chatbot does this in a few milliseconds, for free, and without
 sending the message anywhere.
 
+The question of the series was: **what enters the model's context, when, and who decides?** Today's
+answer: a small model decides whether a message reaches the big model at all, and you decide, with
+your examples, how it sorts.
+
 ### How this connects to WikiYouthBot
 
-- **The chatbot of the young people of La Rochelle, Feurisson**, does exactly this in its public
-  version: a small French model, fine-tuned by the group, recognises the questions of its FAQ before
-  Claude is called. The FAQ answers are free and always the same. See
-  [wikiyouthbot-feurisson](https://github.com/Youth-AI-Lab/wikiyouthbot-feurisson) and its activity
-  with young people.
+- **Feurisson, the chatbot of the young people of La Rochelle**, uses the same idea in its
+  prototype: a small French model (CamemBERT), fine-tuned on the cards of its FAQ, picks the card
+  that answers a question, or none, before Claude is called. The young people will write the cards
+  and the examples (the activity has not been run with the group yet). A FAQ answer is free and always the
+  same. Its emergencies are caught by fixed expressions, not by a model, and only the cards marked as
+  checked are shown to the public. See
+  [wikiyouthbot-feurisson](https://github.com/Youth-AI-Lab/wikiyouthbot-feurisson) (in French) and
+  its activity with young people.
 - **Part 3** is an activity in itself with young people: writing the messages that a chatbot will
   receive, in their own words, is a way to think about who will use it and how.
 - **Part 5** is a question to ask before choosing a tool: what does each message cost, and where
@@ -105,6 +112,9 @@ The series, one piece of the chatbot at a time:
 messages**: how do young people write to a chatbot in your language, with what words, what
 mistakes? You will need them in Part 3. You need your key (`workshop-login`) for Part 5 only.
 
+From [SETUP.md](SETUP.md), you only need steps 1 to 3 today: `workshop-start` and
+`workshop-save` belong to workshops 1 to 5, and do not work in this repository.
+
 ### Reference documents
 
 All of these are in your Codespace, in the file list on the left:
@@ -113,8 +123,8 @@ All of these are in your Codespace, in the file list on the left:
   today.
 - `messages/test.md`: the test messages. The model never sees them while it learns.
 - `sorter`: the command of the day (type `./sorter` to see what it can do).
-- `tools/sorter.py`: the program behind it, about 300 lines of Python, if you are curious.
-- `SETUP.md`: setup and common problems of the whole series.
+- `tools/sorter.py`: the program behind it, about 400 lines of Python, if you are curious.
+- `SETUP.md`: setup and common problems of the whole series (steps 1 to 3 only, today).
 
 ---
 
@@ -129,7 +139,9 @@ All of these are in your Codespace, in the file list on the left:
    workshop-login
    ```
 
-   Paste your key, press Enter. **What you should see:** `Key OK`. The key is only used in Part 5.
+   Paste your key, press Enter. **What you should see:** a line that starts with `Key OK`. The key
+   is only used in Part 5. The end of the line (`You can start: workshop bare`) is for workshops 1
+   to 5: today, you go on with `./sorter setup`.
 
 > ℹ️ **No Codespace?** The same repository opens on your own computer, with Docker and VS Code: see
 > the [dev containers guide](https://github.com/Youth-AI-Lab/yal-devcontainer-guide).
@@ -147,8 +159,9 @@ Codespace from the start: you install them now, once.
 
 2. While it installs, read the next section.
 
-**What you should see:** after about two and a half minutes (151 s in our test on 2026-10-31, in a
-copy of the Codespace with 2 processors), `Model ready (… s). Next: ./sorter baseline`.
+**What you should see:** after two to two and a half minutes (123 s and 151 s in two tests on
+2026-10-31, in a copy of the Codespace with 2 processors), `Model ready (… s). Next: ./sorter
+baseline`.
 
 ### What is this small model?
 
@@ -157,9 +170,13 @@ sentence-transformers library, under the Apache 2.0 licence. It knows about 50 l
 them English, French, Spanish, Catalan, Italian and Dutch.
 
 It does one thing: it turns a sentence into a list of 384 numbers, so that **two sentences with the
-same meaning get close lists**, whatever their words and their language. "Is the forest closed
-today?" and "Est-ce que les massifs sont ouverts aujourd'hui ?" end up close. That is all it knows.
-It has never seen a fire, and it does not write.
+same meaning get close lists**, whatever their words and their language. Closeness goes from 0
+(nothing in common) to 1 (the same meaning). In our test, "Is the forest closed today?" and its
+French translation "La forêt est-elle fermée aujourd'hui ?" get 0.995. "Is the forest open today?",
+the opposite question, still gets 0.86: the model hears "forest" and "today" more than "open" or
+"closed". For sorting, that does not matter: both are questions about today. "Can you help me with
+my maths homework?" gets 0.04. That is all it knows. It has never seen a fire, and it does not
+write.
 
 > 💡 **Tip.** **Checkpoint**: `Key OK`, then `Model ready`.
 
@@ -184,7 +201,7 @@ the test message the class of that example. Nothing has been learned: it only co
 ### What to do
 
 1. Open `messages/examples.md` and `messages/test.md`, side by side. The test messages are different
-   from the examples, and some are in other languages.
+   sentences from the examples, in the same six languages.
 2. Type:
 
    ```bash
@@ -202,7 +219,7 @@ Expected (rows) and chosen (columns):
 ```
 
 The rows are the right classes, the columns are what the sorter chose. Everything on the diagonal is
-right. Below the table, each mistake is listed, and the last line counts the **emergencies missed**.
+right. Below the table, each mistake is listed, then the line **Emergencies missed**.
 
 > ⚠️ **Important.** **The mistake that matters most is an emergency sorted as something else.** A
 > message about the weather sorted as `topic` costs a few tokens. "Help, the field next to us is on
@@ -276,7 +293,7 @@ The model will learn from every line of `messages/examples.md`. A good set of ex
 
 ### What you will discover
 
-- Fine-tuning a small model takes about a minute, on the processors of the Codespace.
+- Fine-tuning a small model takes one or two minutes, on the processors of the Codespace.
 - The confusion table tells you which examples to write next.
 - A second round of examples improves the model; more of the same does not.
 
@@ -289,7 +306,8 @@ The method is called **SetFit**. It works in two steps:
    become "same class".
 2. It then learns a simple rule that draws the borders between the four classes.
 
-That is why a few dozen examples are enough: from 40 examples, it makes about 800 pairs.
+That is why a few dozen examples are enough: from 40 examples, it makes about 800 pairs. It makes
+20 pairs per example, so twice as many examples take about twice as long.
 
 ### What to do
 
@@ -308,8 +326,9 @@ That is why a few dozen examples are enough: from 40 examples, it makes about 80
    ```
 
    **What you should see:** `Fine-tuning on … examples (topic …, today …, urgent …, off-topic …)…`,
-   a progress bar, then `Fine-tuned in … s`. In our test on 2026-10-31, with the 40 starting
-   examples: 62 s.
+   a few progress bars (the long one counts the steps: 50 for 40 examples), then `Fine-tuned in …
+   s`. In our tests on 2026-10-31: about a minute with the 40 starting examples (62 s and 64 s),
+   about two minutes with 80 (132 s).
 4. Test:
 
    ```bash
@@ -317,18 +336,33 @@ That is why a few dozen examples are enough: from 40 examples, it makes about 80
    ```
 
    **What you should see:** the same table as the baseline, for the fine-tuned model. With the
-   messages of the repository, in our test: 32 of 32, no emergency missed, 9 ms per message.
+   messages of the repository, in our test: 32 of 32, no emergency missed, 9 ms per message, then
+   `Not sure (below 0.5) for 2 message(s)`: the right class, but with low confidence. Step 7
+   explains what a chatbot does with them.
 5. **Compare** with the baseline and with your prediction. Write both scores on the board.
 6. **Improve**: for each mistake, add two or three examples that look like it (not the test
    message itself) under the right heading. Fine-tune and test again. Write the second score.
-7. **Try your own messages**, one at a time:
+
+   > ⚠️ **Important.** **The second score is no longer an honest test.** You read the mistakes of
+   > the test to write new examples, so the model is now tuned on this test. To know what it is
+   > really worth, it needs messages that nobody in your pair has seen: the hard messages of the
+   > facilitator, in step 7.
+
+7. **Try new messages**: the hard messages of the facilitator first, then your own. Type:
 
    ```bash
-   ./sorter try "Is it OK to make a campfire tonight?"
+   ./sorter try
    ```
 
-   **What you should see:** the class, the confidence (from 0 to 1), and what a chatbot would do
-   with this message. Below 0.5, the sorter says it is not sure.
+   Then type a message and press Enter, as many times as you like. An empty line stops.
+
+   **What you should see:** for each message, the class, the confidence (from 0 to 1), and what a
+   chatbot would do with it. Below 0.5, the sorter is not sure: the message goes to the chatbot,
+   except a possible emergency, which always gets the safety answer.
+
+   > 💡 **Tip.** Type the messages after `./sorter try`, not on the same line. On the command line,
+   > a `!` between double quotes (`"Au feu !"`) is read by the terminal itself, and the command
+   > waits with `dquote>`.
 
 > ℹ️ **Note.** **Where is the model?** In `~/.workshop-finetune/model`, outside the repository: it
 > weighs about 470 MB. It stays in your Codespace until you delete the Codespace.
@@ -366,7 +400,11 @@ That is why a few dozen examples are enough: from 40 examples, it makes about 80
    classes, then each test message, and answers with one word. It has never seen your examples.
 
    **What you should see:** the same table, then the time, the tokens and the estimated cost, for the
-   test and for 1,000 messages. In our test: TO BE COMPLETED (not measured yet).
+   test and for 1,000 messages. In our test on 2026-10-31 (one run, with the messages of the
+   repository): 30 of 32, and **2 emergencies missed**: "Someone at school keeps hitting me and I'm
+   afraid" and "Un ragazzo mi minaccia e ho paura" (a boy threatens me and I am afraid), sorted as
+   `off-topic`. 0.9 s per message, $0.0007 for the 32
+   messages, so about $0.02 per 1,000 messages.
 2. Fill in the comparison on the board:
 
    | | Your fine-tuned model | Claude, without training |
@@ -377,7 +415,7 @@ That is why a few dozen examples are enough: from 40 examples, it makes about 80
    | Cost per 1,000 messages | nothing | |
    | Works without the network | yes | no |
    | Where the message goes | stays in the Codespace | to Anthropic |
-   | What it took to set up | your examples, one minute of training | a description of the classes |
+   | What it took to set up | your examples, one or two minutes of training | a description of the classes |
 
 > ℹ️ **Note.** **What leaves the Codespace.** With Claude, every message is sent to Anthropic. With
 > your small model, nothing leaves: the model runs on the Codespace's processors. For messages that
@@ -388,8 +426,11 @@ That is why a few dozen examples are enough: from 40 examples, it makes about 80
 
 ### Think about it
 
-1. Your chatbot receives 10,000 messages a month. Which sorter would you use, and why?
-2. You add a fifth class next week. What does it take with each?
+1. In our test, Claude missed two emergencies: threats and violence, with no fire in them. Its
+   description starts with "a chatbot about wildfire prevention". Why might it have sorted them as
+   `off-topic`? Why did your small model not?
+2. Your chatbot receives 10,000 messages a month. Which sorter would you use, and why?
+3. You add a fifth class next week. What does it take with each?
 
 ---
 
@@ -401,14 +442,23 @@ What you did today, in a real chatbot:
 
 - **A sorter before the chatbot**: `urgent` gets the safety answer at once, `off-topic` a refusal
   that costs nothing, `today` goes to the tool of workshop 4, and only `topic` reaches the big model.
-  Feurisson's public version works this way with its FAQ
-  ([wikiyouthbot-feurisson](https://github.com/Youth-AI-Lab/wikiyouthbot-feurisson)).
+  When the sorter is not sure, the message goes to the chatbot, except a possible emergency, which
+  always gets the safety answer.
+- **Every fixed answer ends with the emergency number.** A sorter makes mistakes: an emergency
+  sorted as `off-topic` must still find help.
+- **Feurisson's prototype** does part of this: fixed expressions for emergencies, a fine-tuned small
+  model for its FAQ ([wikiyouthbot-feurisson](https://github.com/Youth-AI-Lab/wikiyouthbot-feurisson)).
 - **The examples and the test** stay useful: when the chatbot is online, the messages it got wrong
   become new examples.
 - **The method** works for any short list of classes, in any of the model's languages: the kind of
   question, the topic, the age group it seems to come from, the tone.
 
-### Step 2 - Fill in the exit card
+### Step 2 - Keep your examples
+
+Your examples and your test are the real work of the day. In the file list, right-click on
+`messages/examples.md`, then **Download**. Do the same for `messages/test.md`.
+
+### Step 3 - Fill in the exit card
 
 Answer on the card of the facilitator, alone, in a few words:
 
@@ -426,13 +476,18 @@ The common problems (key, Codespace, terminal) are in the
 **`The libraries are not installed yet. Type: ./sorter setup`** - Type it, and wait for
 `Model ready`. Each new Codespace needs it once.
 
-**`./sorter setup` stops on a network error.** - Type it again: it starts from where it stopped.
+**`./sorter setup` stops on a network error, or `The model could not be downloaded or opened`.** -
+Type `./sorter setup` again: it starts from where it stopped.
 
-**`… unknown class (line …)`** - A heading of `messages/examples.md` or `messages/test.md` is not
-one of the four. They must be exactly `## topic`, `## today`, `## urgent`, `## off-topic`.
+**`messages/… : … line(s) to fix`** - The sorter lists each line it cannot read, with its number.
+The headings must be exactly `## topic`, `## today`, `## urgent`, `## off-topic`. Each message
+starts with `- `, a dash and a space: not `*`, not `1.`, not the long dash `–` that a word processor
+puts in.
 
-**`Each class needs at least 2 examples`** - A heading has fewer than two messages under it, or its
-messages do not start with `- `.
+**`Each class needs at least 2 examples`** - A heading has fewer than two messages under it.
+
+**The terminal shows `dquote>` and waits.** - A `!` between double quotes was read by the terminal.
+Press `Ctrl+C`, type `./sorter try` alone, then type your message.
 
 **`Warning: … test message(s) are also in the examples`** - Change or remove that message in
 `messages/test.md` (or in `examples.md`), then fine-tune again.
@@ -441,6 +496,12 @@ messages do not start with `- `.
 type `./sorter train` first.
 
 **`./sorter claude` says the key was refused.** - Type `workshop-login` and paste your key again.
+
+**`Claude is busy`** - Many pairs ask at the same time. Wait a minute, then type `./sorter claude`
+again.
+
+**`Claude refused the request (HTTP 400): …`** - Show the message to the facilitator: often, the
+key has reached its spending limit.
 
 ---
 
