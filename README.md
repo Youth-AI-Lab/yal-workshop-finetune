@@ -774,7 +774,8 @@ in a minute or two.
 
 ### Step 3 - Fill in the exit card
 
-Answer on the card of the facilitator, alone, in a few words:
+Take a blank card or a half sheet from the facilitator. This is your **exit card**. Answer alone, in a
+few words:
 
 1. Why can a classifier not invent an answer?
 2. Why must a test message never be one of the examples?

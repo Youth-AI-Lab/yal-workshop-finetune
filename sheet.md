@@ -16,7 +16,7 @@ Full page: [README.md](README.md). Setup and common problems: [SETUP.md](SETUP.m
 2. Open the Codespace: **https://codespaces.new/Youth-AI-Lab/yal-workshop-finetune** → **Create codespace**.
 3. Terminal: `workshop-login`, paste the key once, Enter → `Key OK`.
 4. `workshop-start 6` → `Ready for workshop 6.`
-5. `./sorter setup` (2 to 2 min 30) → `Model ready`.
+5. `./sorter setup` (about 2 min) → `Model ready`.
 
 ## 2. A model that has learned nothing yet (15 min)
 
@@ -35,6 +35,8 @@ Full page: [README.md](README.md). Setup and common problems: [SETUP.md](SETUP.m
 
 1. Predict the score. `./sorter baseline` again.
 2. `./sorter train` (1 to 2 min), then `./sorter test`. Both scores on the board.
+   `ls -la ~/.workshop-finetune/model`: the body (`model.safetensors`, about 470 MB) and the head
+   (`model_head.pkl`, about 7 KB). The `README.md` of this folder quotes some of your examples.
 3. For each mistake, add 2 or 3 examples that look like it. Train and test again. This second score is
    no longer an honest test: you tuned the examples on it.
 4. `./sorter try`, then type the facilitator's hard messages, one per line (an empty line stops). Do not
