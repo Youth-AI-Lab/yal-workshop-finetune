@@ -1,7 +1,7 @@
 # Workshop 6 - Teach a small model to sort messages (one page)
 
 **Question of the day: when is it worth teaching a small model, instead of asking a big one?**
-Full page: [README.md](README.md). Setup and common problems: [SETUP.md](SETUP.md) (steps 1 to 3 only today).
+Full page: [README.md](README.md). Setup and common problems: [SETUP.md](SETUP.md) (steps 1 to 3 and 6 today).
 
 | Class | What the chatbot should do |
 |---|---|
@@ -15,7 +15,8 @@ Full page: [README.md](README.md). Setup and common problems: [SETUP.md](SETUP.m
 1. Idle timeout not set yet on this account? First: [SETUP.md, step 1](SETUP.md#step-1---let-the-codespace-wait-for-you).
 2. Open the Codespace: **https://codespaces.new/Youth-AI-Lab/yal-workshop-finetune** → **Create codespace**.
 3. Terminal: `workshop-login`, paste the key once, Enter → `Key OK`.
-4. `./sorter setup` (2 to 2 min 30) → `Model ready`.
+4. `workshop-start 6` → `Ready for workshop 6.`
+5. `./sorter setup` (2 to 2 min 30) → `Model ready`.
 
 ## 2. A model that has learned nothing yet (15 min)
 
@@ -47,7 +48,7 @@ Full page: [README.md](README.md). Setup and common problems: [SETUP.md](SETUP.m
 
 ## 6. Closing (15 min)
 
-Keep your files: right-click on `messages/examples.md`, then **Download**; same for `messages/test.md`.
+Keep your files: `workshop-save`, then right-click on `my-work.zip` → **Download...**.
 
 Exit card, alone: why can a classifier not invent? Why never a test message in the examples? One case
 for fine-tuning a small model, one for asking a big one.

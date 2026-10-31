@@ -112,8 +112,8 @@ The series, one piece of the chatbot at a time:
 messages**: how do young people write to a chatbot in your language, with what words, what
 mistakes? You will need them in Part 3. You need your key (`workshop-login`) for Part 5 only.
 
-From [SETUP.md](SETUP.md), you only need steps 1 to 3 today: `workshop-start` and
-`workshop-save` belong to workshops 1 to 5, and do not work in this repository.
+From [SETUP.md](SETUP.md), you need steps 1 to 3 and step 6 today. This workshop has no chatbot, so
+you skip steps 4 and 5.
 
 ### Reference documents
 
@@ -124,7 +124,7 @@ All of these are in your Codespace, in the file list on the left:
 - `messages/test.md`: the test messages. The model never sees them while it learns.
 - `sorter`: the command of the day (type `./sorter` to see what it can do).
 - `tools/sorter.py`: the program behind it, about 400 lines of Python, if you are curious.
-- `SETUP.md`: setup and common problems of the whole series (steps 1 to 3 only, today).
+- `SETUP.md`: setup and common problems of the whole series (steps 1 to 3 and 6, today).
 
 ---
 
@@ -139,9 +139,15 @@ All of these are in your Codespace, in the file list on the left:
    workshop-login
    ```
 
-   Paste your key, press Enter. **What you should see:** a line that starts with `Key OK`. The key
-   is only used in Part 5. The end of the line (`You can start: workshop bare`) is for workshops 1
-   to 5: today, you go on with `./sorter setup`.
+   Paste your key, press Enter. **What you should see:** a line that starts with `Key OK` and ends
+   with `You can start: workshop-start 6`. The key is only used in Part 5.
+3. Get ready for today:
+
+   ```bash
+   workshop-start 6
+   ```
+
+   **What you should see:** `Ready for workshop 6.`, then `First command: ./sorter setup`.
 
 > ℹ️ **No Codespace?** The same repository opens on your own computer, with Docker and VS Code: see
 > the [dev containers guide](https://github.com/Youth-AI-Lab/yal-devcontainer-guide).
@@ -455,8 +461,18 @@ What you did today, in a real chatbot:
 
 ### Step 2 - Keep your examples
 
-Your examples and your test are the real work of the day. In the file list, right-click on
-`messages/examples.md`, then **Download**. Do the same for `messages/test.md`.
+Your examples and your test are the real work of the day. Save them:
+
+```bash
+workshop-save
+```
+
+**What you should see:** `Saved … in my-work.zip`. In the file list, right-click on `my-work.zip`,
+then **Download...**.
+
+To go on later, in a new Codespace: drag `my-work.zip` into the file list, type
+`workshop-start 6 --from my-work.zip`, then `./sorter setup` and `./sorter train`. The fine-tuned model is not in
+the file: it comes back from your examples in a minute or two.
 
 ### Step 3 - Fill in the exit card
 

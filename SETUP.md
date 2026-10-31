@@ -127,6 +127,8 @@ If you see another message, look at [Troubleshooting](#troubleshooting).
 
 ### Step 4 - Your first conversation
 
+> ℹ️ **Note.** **Workshop 6** has no chatbot: skip steps 4 and 5, and go to step 6.
+
 1. **Type**:
 
    ```bash
@@ -181,8 +183,6 @@ Some commands take time. A second terminal lets you go on working in the first o
 2. A new terminal opens. You can switch between the two in the list on the right of the panel.
 
 ### Step 6 - Get ready for the workshop of the day
-
-> ℹ️ **Note.** **Workshop 6** stops at step 3: go back to its page, and type `./sorter setup`.
 
 **Type** `workshop-start` and the number of the workshop, written at the top of its README. For
 workshop 1:
