@@ -1,0 +1,13 @@
+{
+  // Atelier : pas de panneau de chat à droite ni de fonctions Copilot. Le chatbot de l'atelier
+  // est Claude Code, dans le terminal ; le chat de VS Code prêterait à confusion.
+  "workbench.secondarySideBar.defaultVisibility": "hidden",
+  "chat.disableAIFeatures": true,
+  // Pas de fenêtre « install the recommended 'Python' extension » à l'ouverture d'un .py
+  // (mcp/fire_danger_server.py, atelier 4) : les participants lisent le code, ils ne le développent pas.
+  "extensions.ignoreRecommendations": true,
+  // Texte plus grand que par défaut : écran projeté, deux personnes devant un écran (REFONTE, section 6).
+  "editor.fontSize": 16,
+  "terminal.integrated.fontSize": 16,
+  "markdown.preview.fontSize": 16
+}

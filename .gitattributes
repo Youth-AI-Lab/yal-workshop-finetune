@@ -1,0 +1,5 @@
+# Text files with LF line endings, whatever the system of the person who clones (Windows included).
+* text=auto eol=lf
+# The original documents of the corpus stay byte for byte as their source published them.
+corpus/** -text
+inbox/** -text

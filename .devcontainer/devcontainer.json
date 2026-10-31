@@ -1,0 +1,26 @@
+{
+  "name": "Youth AI Lab: build your own chatbot",
+  // Configuration DISTRIBUÉE : elle ne construit rien, elle télécharge l'image fabriquée à
+  // partir de source/ et publiée par le workflow devcontainer-publish. Créer un Codespace se
+  // réduit à ce téléchargement, identique pour tous les binômes.
+  // Tag épinglé, jamais `latest`. Pour en changer : facilitator/SETUP.md (dépôt animateur),
+  // en publiant l'image AVANT de modifier cette ligne.
+  "image": "ghcr.io/youth-ai-lab/yal-workshop-devcontainer:2026.10.38",
+  "remoteUser": "vscode",
+  "remoteEnv": {
+    "WORKSHOP_HOME": "${containerWorkspaceFolder}"
+  },
+  // Docker (commande openwebui) est dans l'image : rien à déclarer ici. Open WebUI occupe
+  // environ 1,5 Go : 8 Go de mémoire (machine à 2 cœurs, celle par défaut).
+  "hostRequirements": { "cpus": 2, "memory": "8gb" },
+  // Lecteur PDF (mathematic.vscode-pdf : tomoki1207.pdf est désactivée dans le navigateur).
+  // Atelier 5 (partie 4) : la carte du wiki (wiki-explore) s'ouvre d'elle-même dans un onglet du navigateur.
+  // Open WebUI : la commande affiche l'adresse quand tout est chargé (pas d'onglet ouvert avant).
+  "portsAttributes": {
+    "8765": { "label": "Wiki graph", "onAutoForward": "openBrowser" },
+    "3000": { "label": "Open WebUI", "onAutoForward": "silent" }
+  },
+  "customizations": {
+    "vscode": { "extensions": ["mathematic.vscode-pdf", "bierner.markdown-mermaid"] }
+  }
+}

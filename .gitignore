@@ -1,0 +1,12 @@
+# Produced during the session
+answers/
+graphify-out/
+__pycache__/
+scores-judge.md
+scores-personas.md
+# Files written by chatbot-export and workshop-save
+/*.zip
+# Written by workshop-start (to avoid a useless extra save), never part of the kit
+.workshop/last-start.json
+# Open WebUI administrator account, kept here only in a dev container on your own computer
+.openwebui-class/

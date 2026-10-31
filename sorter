@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# The message sorter of workshop 6. Type ./sorter to see the commands.
+# The libraries (about 1.5 GB) go to ~/.workshop-finetune, outside the repository: once per Codespace.
+set -euo pipefail
+here="$(cd "$(dirname "$0")" && pwd)"
+home="${WORKSHOP_FINETUNE_HOME:-$HOME/.workshop-finetune}"
+python="$home/venv/bin/python"
+export HF_HUB_DISABLE_TELEMETRY=1 TOKENIZERS_PARALLELISM=false HF_HOME="$home/huggingface"
+
+if [[ "${1:-}" == setup ]]; then
+  start=$(date +%s)
+  echo "Installing the libraries (about 2 minutes, once per Codespace)…"
+  mkdir -p "$home"
+  [[ -x "$python" ]] || python3 -m venv "$home/venv"
+  "$home/venv/bin/pip" install -q --disable-pip-version-check -r "$here/tools/requirements.txt"
+  echo "Libraries installed ($(( $(date +%s) - start )) s). Downloading the model…"
+  exec "$python" "$here/tools/sorter.py" setup
+fi
+if [[ ! -x "$python" ]]; then
+  [[ $# -eq 0 ]] && exec python3 "$here/tools/sorter.py"
+  echo "The libraries are not installed yet. Type: ./sorter setup" >&2
+  exit 1
+fi
+exec "$python" "$here/tools/sorter.py" "$@"
