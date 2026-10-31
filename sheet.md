@@ -27,7 +27,7 @@ Full page: [README.md](README.md). Setup and common problems: [SETUP.md](SETUP.m
 ## 3. Write your examples, and a test for another pair (25 min)
 
 1. At least **10 messages per class** in `messages/examples.md`, in your language, real-sounding, with
-   hard cases. Headings unchanged, each message starts with `- `. No personal information.
+   hard cases. Headings unchanged, each message starts with `- `. Check the heading above each line: the end of the file is `## off-topic`. No personal information.
 2. On paper: **3 messages per class for another pair**. Swap.
 3. Type the other pair's messages into `messages/test.md`. **Never** put a test message in the examples.
 

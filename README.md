@@ -276,6 +276,11 @@ The model will learn from every line of `messages/examples.md`. A good set of ex
 3. **Type the messages of the other pair** into `messages/test.md`, under the right headings, in place
    of the starting messages or in addition to them. Save.
 
+> ⚠️ **Important.** **Check the heading above each line.** `## off-topic` is the last heading, so a
+> message typed at the very end of the file lands there. In our test, one fire message left there
+> made the model miss 2 emergencies (30 of 32). Under `## urgent`, the same message missed none (31
+> of 32).
+
 > ⚠️ **Important.** **The golden rule: a test message never goes into the examples.** Otherwise the
 > test measures memory, not understanding. If a test message is also an example, `./sorter train`
 > warns you.
@@ -470,7 +475,8 @@ workshop-save
 **What you should see:** `Saved … in my-work.zip`. In the file list, right-click on `my-work.zip`,
 then **Download...**.
 
-To go on later, in a new Codespace: drag `my-work.zip` into the file list, type
+To go on later, in a new Codespace: drag `my-work.zip` into the file list (VS Code opens a tab that
+says it cannot display the file: close it), type
 `workshop-start 6 --from my-work.zip`, then `./sorter setup` and `./sorter train`. The fine-tuned model is not in
 the file: it comes back from your examples in a minute or two.
 
