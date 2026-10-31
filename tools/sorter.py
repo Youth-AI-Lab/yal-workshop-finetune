@@ -365,7 +365,7 @@ def ask_claude(key, message):
             if busy:
                 raise Stop(f"Claude is busy (HTTP {e.code}). Wait a minute and type ./sorter claude again.")
             raise Stop(f"Claude refused the request (HTTP {e.code}): {detail or 'no detail'}. "
-                       "Show this message to the facilitator (a spending limit of the key, for example).")
+                       "Show this message to the facilitator (the spending limit of the room, for example).")
         except (urllib.error.URLError, OSError, http.client.HTTPException, ValueError) as e:
             # ValueError: an answer cut in the middle, that is not JSON
             if attempt < 3:

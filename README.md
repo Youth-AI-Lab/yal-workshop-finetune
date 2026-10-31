@@ -517,7 +517,7 @@ type `./sorter train` first.
 again.
 
 **`Claude refused the request (HTTP 400): …`** - Show the message to the facilitator: often, the
-key has reached its spending limit.
+spending limit set for the room has been reached.
 
 ---
 
