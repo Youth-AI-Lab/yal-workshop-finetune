@@ -55,6 +55,7 @@ WHAT_HAPPENS = {
                  "(no tokens spent)",
 }
 UNSURE = 0.5          # below this confidence, the sorter says it is not sure
+LONG = 15             # words: past this, the sorter does not decide alone (see route)
 CLAUDE_MODEL = os.environ.get("WORKSHOP_SORTER_CLAUDE", "claude-haiku-5-5")
 CLAUDE_PRICES = (0.10, 0.50)    # $ per million tokens in and out (claude-haiku-5-5, price list 2026-10-31)
 
@@ -249,12 +250,21 @@ def class_names(model):
 
 
 def predict(model, messages):
+    """The class of each message. The model averages the words of a message, so a cry for help inside a story
+    disappears: each sentence of a longer message is also read alone, and an emergency in one of them counts."""
     probas = model.predict_proba(messages).tolist()
     names = class_names(model)
+    urgent = names.index("urgent")
     out = []
-    for row in probas:
+    for message, row in zip(messages, probas):
         i = max(range(len(row)), key=row.__getitem__)
-        out.append((names[i], row[i]))
+        label, confidence = names[i], row[i]
+        sentences = [s for s in re.split(r"(?<=[.!?…])\s+", message) if s]
+        if len(sentences) > 1 and (label != "urgent" or confidence < UNSURE):
+            worst = max(r[urgent] for r in model.predict_proba(sentences).tolist())
+            if worst >= UNSURE:
+                label, confidence = "urgent", worst
+        out.append((label, confidence))
     return out
 
 
@@ -270,16 +280,25 @@ def cmd_test():
     if unsure:
         print(f"Not sure (below {UNSURE}) for {unsure} message(s): a real chatbot would pass them to the chatbot, "
               "whose own rules also cover emergencies.")
+    long = sum(1 for (m, _), (p, c) in zip(test, chosen) if len(m.split()) > LONG and (p != "urgent" or c < UNSURE))
+    if long:
+        print(f"Too long to sort (more than {LONG} words) for {long} message(s): a real chatbot would pass them to "
+              "the chatbot too.")
     if leaks(train, test):
         print("\nWarning: some test messages are also in the examples: this score is too good.")
 
 
-def route(label, confidence):
+def route(label, confidence, message):
     """What a real chatbot would do. Mistakes are not equal: a possible emergency gets the safety answer even
-    when the sorter is not sure; any other doubt goes to the chatbot, whose own rules also cover emergencies."""
-    if label == "urgent":
+    when the sorter is not sure; any other doubt goes to the chatbot, whose own rules also cover emergencies. A
+    long message counts as a doubt: the model learnt on short ones, and it stops reading at 128 tokens."""
+    long = len(message.split()) > LONG
+    if label == "urgent" and (confidence >= UNSURE or not long):
         return WHAT_HAPPENS["urgent"] + ("" if confidence >= UNSURE else " (not sure, but a possible emergency "
                                          "always comes first)")
+    if long:
+        return f"too long to sort (more than {LONG} words), so it goes to the chatbot, whose own rules also cover " \
+               "emergencies"
     if confidence < UNSURE:
         return f"not sure (below {UNSURE}), so it goes to the chatbot, whose own rules also cover emergencies"
     return WHAT_HAPPENS[label]
@@ -291,7 +310,7 @@ def cmd_try(message=None):
     def show(text):
         (label, confidence), = predict(model, [text])
         print(f"Class: {label} (confidence {confidence:.2f})")
-        print(f"What would happen: {route(label, confidence)}.")
+        print(f"What would happen: {route(label, confidence, text)}.")
 
     if message:
         show(message)
