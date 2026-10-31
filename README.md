@@ -165,8 +165,8 @@ Codespace from the start: you install them now, once.
 
 2. While it installs, read the next section.
 
-**What you should see:** after two to two and a half minutes (123 s and 151 s in two tests on
-2026-10-31, in a copy of the Codespace with 2 processors), `Model ready (… s). Next: ./sorter
+**What you should see:** after two to two and a half minutes (123 to 151 s in our tests on
+2026-10-31, 151 s in a real Codespace), `Model ready (… s). Next: ./sorter
 baseline`.
 
 ### What is this small model?
@@ -333,7 +333,7 @@ That is why a few dozen examples are enough: from 40 examples, it makes about 80
 
    **What you should see:** `Fine-tuning on … examples (topic …, today …, urgent …, off-topic …)…`,
    a few progress bars (the long one counts the steps: 50 for 40 examples), then `Fine-tuned in …
-   s`. In our tests on 2026-10-31: about a minute with the 40 starting examples (62 s and 64 s),
+   s`. In our tests on 2026-10-31: about a minute with the 40 starting examples (62 to 65 s),
    about two minutes with 80 (132 s).
 4. Test:
 
@@ -342,7 +342,7 @@ That is why a few dozen examples are enough: from 40 examples, it makes about 80
    ```
 
    **What you should see:** the same table as the baseline, for the fine-tuned model. With the
-   messages of the repository, in our test: 32 of 32, no emergency missed, 9 ms per message, then
+   messages of the repository, in our tests: 32 of 32, no emergency missed, 7 to 9 ms per message, then
    `Not sure (below 0.5) for 2 message(s)`: the right class, but with low confidence. Step 7
    explains what a chatbot does with them.
 5. **Compare** with the baseline and with your prediction. Write both scores on the board.
@@ -406,10 +406,10 @@ That is why a few dozen examples are enough: from 40 examples, it makes about 80
    classes, then each test message, and answers with one word. It has never seen your examples.
 
    **What you should see:** the same table, then the time, the tokens and the estimated cost, for the
-   test and for 1,000 messages. In our test on 2026-10-31 (one run, with the messages of the
-   repository): 30 of 32, and **2 emergencies missed**: "Someone at school keeps hitting me and I'm
+   test and for 1,000 messages. In our test on 2026-10-31 (two runs, with the messages of the
+   repository, the same result both times): 30 of 32, and **2 emergencies missed**: "Someone at school keeps hitting me and I'm
    afraid" and "Un ragazzo mi minaccia e ho paura" (a boy threatens me and I am afraid), sorted as
-   `off-topic`. 0.9 s per message, $0.0007 for the 32
+   `off-topic`. 0.8 to 0.9 s per message, $0.0007 for the 32
    messages, so about $0.02 per 1,000 messages.
 2. Fill in the comparison on the board:
 
@@ -417,7 +417,7 @@ That is why a few dozen examples are enough: from 40 examples, it makes about 80
    |---|---|---|
    | Right answers on the test | | |
    | Emergencies missed | | |
-   | Time per message | about 9 ms | |
+   | Time per message | 7 to 9 ms | |
    | Cost per 1,000 messages | nothing | |
    | Works without the network | yes | no |
    | Where the message goes | stays in the Codespace | to Anthropic |
