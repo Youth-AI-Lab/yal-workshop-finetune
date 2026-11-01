@@ -19,8 +19,8 @@ if [[ "${1:-}" == setup ]]; then
   exec "$python" "$here/tools/sorter.py" setup
 fi
 if [[ ! -x "$python" ]]; then
-  # The help and ./sorter claude use the standard library only.
-  [[ $# -eq 0 || "${1:-}" == claude ]] && exec python3 "$here/tools/sorter.py" "$@"
+  # The help, ./sorter compare and ./sorter claude use the standard library only.
+  [[ $# -eq 0 || "${1:-}" == claude || "${1:-}" == compare ]] && exec python3 "$here/tools/sorter.py" "$@"
   echo "The libraries are not installed yet. Type: ./sorter setup" >&2
   exit 1
 fi

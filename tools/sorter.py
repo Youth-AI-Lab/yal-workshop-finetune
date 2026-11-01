@@ -6,6 +6,7 @@ each message before the chatbot sees it. Run it with ./sorter (the file next to 
     ./sorter train              fine-tunes the model on messages/examples.md (about 1 minute for 40 examples)
     ./sorter test               the fine-tuned model on messages/test.md: what it got right, and its mistakes
     ./sorter try                type messages one by one: their class, and what the chatbot would do with them
+    ./sorter compare            the same test, sorted by a general chat model from a description of the classes (no examples)
     ./sorter claude             the same test, sorted by Claude from a description of the classes (no examples)
 
 The four classes (headings of messages/examples.md and messages/test.md):
@@ -29,6 +30,7 @@ import time
 import urllib.error
 import urllib.request
 import warnings
+from collections import Counter, namedtuple
 from pathlib import Path
 
 # Only what the participants need to read: no technical warnings from the libraries.
@@ -60,7 +62,7 @@ WHAT_HAPPENS = {
 UNSURE = 0.5          # below this confidence, the sorter says it is not sure
 LONG = 15             # words: past this, the sorter does not decide alone (see route)
 UNSAFE = "  <- an emergency that would not get the safety answer"
-CLAUDE_MODEL = os.environ.get("WORKSHOP_SORTER_CLAUDE", "claude-haiku-5-5")
+UNSORTED = "(unsorted)"     # no class came back for this message: see table
 CLAUDE_PRICES = (0.10, 0.50)    # $ per million tokens in and out (claude-haiku-5-5, price list 2026-10-31)
 
 
@@ -171,27 +173,42 @@ def clashes(train):
     return [(m, h, c) for i, (m, c) in enumerate(train) for t, h in train[:i] if h != c and same_text(m, t)]
 
 
-def table(results):
-    """results: [(message, expected, predicted, confidence or None)]. Prints the mistakes and the confusion table."""
+def table(results, answer="Claude's answer"):
+    """results: [(message, expected, predicted, confidence or None)]. Prints the mistakes and the confusion table.
+    When predicted is UNSORTED, the last value says why. answer: who answered, in the line about (other)."""
     right = sum(e == p for _, e, p, _ in results)
-    columns = CLASSES + (["(other)"] if any(p not in CLASSES for _, _, p, _ in results) else [])
+    chosen = {p for _, _, p, _ in results}
+    columns = CLASSES + [c for c in ("(other)", UNSORTED) if c in chosen]
     print(f"\n{right} of {len(results)} messages in the right class.\n")
     print("Expected (rows) and chosen (columns):")
     print(" " * 11 + "".join(f"{c:>11}" for c in columns))
     for e in CLASSES:
         print(f"{e:>11}" + "".join(f"{sum(1 for _, x, p, _ in results if x == e and p == c):>11}" for c in columns))
     if "(other)" in columns:
-        print("(other): Claude's answer was not one of the four classes, so the message counts as a mistake.")
-    mistakes = [(m, e, p, c) for m, e, p, c in results if e != p]
+        print(f"(other): {answer} was not one of the four classes, so the message counts as a mistake.")
+    if UNSORTED in columns:
+        print(f"{UNSORTED}: no class came back, so the message counts as a mistake. See 'Not sorted' below.")
+    mistakes = [(m, e, p, c) for m, e, p, c in results if e != p and p != UNSORTED]
     if mistakes:
         print("\nMistakes:")
         for m, e, p, c in mistakes:
             danger = UNSAFE if e == "urgent" else ""
             confidence = f"({c:.2f})  " if c is not None else ""
             print(f"  expected {e:<9} chose {p:<9} {confidence}{m}{danger}")
+    lost = [(m, e, why) for m, e, p, why in results if p == UNSORTED]
+    if lost:
+        print(f"\nNot sorted: {len(lost)} of {len(results)} messages. Why:")
+        for reason, count in Counter(why for _, _, why in lost).most_common():
+            print(f"  {count}: {reason}")
+            for m, e, why in lost:
+                if why == reason:
+                    print(f"     expected {e:<9} {m}{UNSAFE if e == 'urgent' else ''}")
     missed = sum(1 for _, e, p, _ in results if e == "urgent" and p != "urgent")
     if any(e == "urgent" for _, e, _, _ in results):
         print(f"\nEmergencies missed: {missed}. This is the mistake that matters most.")
+        silent = sum(1 for _, e, _ in lost if e == "urgent")
+        if silent:
+            print(f"{silent} of them not sorted at all: nobody knows what the model would have chosen.")
     else:
         print("\nEmergencies missed: none tested. No message under ## urgent was tested, so this score says "
               "nothing about emergencies.")
@@ -404,97 +421,326 @@ urgent: a fire happening now, or someone in danger or distress (needs a safety a
 off-topic: anything else"""
 
 
+# A short copy of workshop_provider.py, from the workshop image: this file is not in the image, and it uses the
+# standard library only. Same names, same routing, and a test compares the two.
+KEY_FILE = Path.home() / ".workshop-key"
+Provider = namedtuple("Provider", "name label prefix api small")
+ANTHROPIC = Provider("anthropic", "Anthropic", "sk-ant-", "https://api.anthropic.com/v1",
+                     os.environ.get("WORKSHOP_SORTER_CLAUDE", "claude-haiku-5-5"))
+# Must stay aligned with the default small model of OPENROUTER in workshop_provider.py.
+OPENROUTER = Provider("openrouter", "OpenRouter", "sk-or-", "https://openrouter.ai/api/v1",
+                      "mistralai/mistral-small-3.2-24b-instruct")
+PROVIDERS = (ANTHROPIC, OPENROUTER)
+
+# OpenRouter sends a question to any company that serves the model unless told otherwise: never to one
+# that may keep it or train on it. A request that no company can serve then fails with 404 or 503.
+ROUTING = {"data_collection": "deny"}
+
+# text: the answer. tokens_in, tokens_out: as billed. cost: what the provider says the call cost, or None.
+# stop: end, length, refusal or error. kind: None when the call worked, otherwise one of
+#   key (refused), credits (no money left), limit (a spending limit or a quota), busy (try again later),
+#   model (unknown model, or no company can serve it), refused (the request or the answer was blocked),
+#   network, or other.
+# message: the provider's words, for a person. retry_after: seconds, when the provider gives them.
+Reply = namedtuple("Reply", "text tokens_in tokens_out cost stop kind message retry_after status")
+
+
+def provider_of(key):
+    """The provider of this key, or None."""
+    for provider in PROVIDERS:
+        if key.startswith(provider.prefix):
+            return provider
+    return None
+
+
+def read_key():
+    """The saved key, or "" when there is none."""
+    try:
+        return KEY_FILE.read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
+def _kind(status, message):
+    """What an HTTP error means for the person. 403 is not always the key on OpenRouter."""
+    text = message.lower()
+    if status == 401:
+        return "key"
+    if status == 402:
+        return "credits"
+    if status == 403:
+        if "limit" in text or "budget" in text or "guardrail" in text:
+            return "limit"
+        return "refused" if "moderat" in text or "flagged" in text else "key"
+    if status == 404:
+        return "model"
+    if status == 429:
+        return "busy"
+    if status in (408, 500, 502, 503, 504, 524, 529):
+        return "model" if "no available" in text or "no endpoints" in text else "busy"
+    return "other"
+
+
+def _retry_after(headers):
+    try:
+        return max(0.0, float(headers.get("retry-after")))
+    except (TypeError, ValueError, AttributeError):  # missing, or a date
+        return None
+
+
+def _failed(kind, message, status=None, retry_after=None):
+    return Reply("", 0, 0, None, "error", kind, message, retry_after, status)
+
+
+def _count(usage, *names):
+    """The sum of these fields of usage. A field can be missing, or null."""
+    values = [usage.get(name) for name in names]
+    return sum(value for value in values if isinstance(value, (int, float)))
+
+
+def _request_anthropic(provider, key, system, user, model, max_tokens, effort):
+    body = {"model": model, "max_tokens": max_tokens, "system": system,
+            "messages": [{"role": "user", "content": user}]}
+    if effort == "none":
+        body["thinking"] = {"type": "disabled"}
+    elif effort:
+        body["output_config"] = {"effort": effort}
+    return f"{provider.api}/messages", body, {"x-api-key": key, "anthropic-version": "2023-06-01"}
+
+
+def _request_openrouter(provider, key, system, user, model, max_tokens, effort):
+    # max_tokens is deprecated there, and some companies refuse less than 16.
+    body = {"model": model, "max_completion_tokens": max(max_tokens, 16), "provider": ROUTING,
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+    if effort:
+        body["reasoning"] = {"effort": effort}
+    return f"{provider.api}/chat/completions", body, {"Authorization": f"Bearer {key}"}
+
+
+def _read_anthropic(data):
+    usage = data.get("usage") or {}
+    # Second change from the original: input_tokens only. This test asks for no cache, and has always counted this way.
+    tokens_in = _count(usage, "input_tokens")
+    text = "".join(b.get("text", "") for b in data.get("content") or [] if b.get("type") == "text")
+    stop = {"refusal": "refusal", "max_tokens": "length"}.get(data.get("stop_reason"), "end")
+    return Reply(text, tokens_in, _count(usage, "output_tokens"), None, stop,
+                 "refused" if stop == "refusal" else None, "", None, 200)
+
+
+def _read_openrouter(data):
+    # OpenRouter can answer 200 with an error, in the body or in the choice: check both first.
+    choice = (data.get("choices") or [{}])[0]
+    finish = choice.get("finish_reason")
+    error = data.get("error") or choice.get("error")
+    if finish == "error" and not error:     # whatever text came is a piece of an answer, not an answer
+        error = "it stopped before the end of the answer"
+    usage = data.get("usage") or {}
+    tokens = (_count(usage, "prompt_tokens"), _count(usage, "completion_tokens"))
+    cost = usage.get("cost")
+    if error:
+        message = str(error.get("message") or error) if isinstance(error, dict) else str(error)
+        code = error.get("code") if isinstance(error, dict) else None
+        return Reply("", *tokens, cost, "error", _kind(code if isinstance(code, int) else 502, message), message,
+                     None, code if isinstance(code, int) else 200)
+    content = (choice.get("message") or {}).get("content")
+    if isinstance(content, list):
+        content = "".join(b.get("text", "") for b in content if isinstance(b, dict))
+    if finish == "content_filter" or (choice.get("message") or {}).get("refusal"):
+        return Reply(content or "", *tokens, cost, "refusal", "refused", "the provider blocked this text", None, 200)
+    if finish == "length":
+        return Reply(content or "", *tokens, cost, "length", None, "", None, 200)
+    return Reply(content or "", *tokens, cost, "end", None, "", None, 200)
+
+
+def ask(key, system, user, model=None, max_tokens=1024, effort=None, url=None, timeout=90):
+    """One request to the provider of this key. Never raises: read Reply.kind.
+
+    effort: None (the model's default), "none" (no thinking before the answer) or "low".
+    url: another address for the request (a fake endpoint in the tests).
+    One change from the original: status is always 200 when the request itself worked, whatever the error code
+    written in the answer, so that the caller can tell one bad answer from a provider that refuses every message."""
+    provider = provider_of(key)
+    if provider is None:
+        return _failed("key", "this key is neither Anthropic (sk-ant-) nor OpenRouter (sk-or-)")
+    build = _request_openrouter if provider is OPENROUTER else _request_anthropic
+    read = _read_openrouter if provider is OPENROUTER else _read_anthropic
+    address, body, headers = build(provider, key, system, user, model or provider.small, max_tokens, effort)
+    request = urllib.request.Request(url or address, data=json.dumps(body).encode("utf-8"),
+                                     headers=dict(headers, **{"content-type": "application/json"}))
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            data = json.load(response)
+        if not isinstance(data, dict):
+            raise ValueError("the reply is not a JSON object")
+    except urllib.error.HTTPError as e:
+        try:
+            detail = json.load(e).get("error") or {}
+            message = str((detail.get("message") or "") if isinstance(detail, dict) else detail)
+        except (ValueError, AttributeError, OSError, http.client.HTTPException):  # a body cut in the middle
+            message = ""
+        return _failed(_kind(e.code, message), message, e.code, _retry_after(e.headers))
+    except (urllib.error.URLError, OSError, ValueError, http.client.HTTPException) as e:
+        return _failed("network", str(getattr(e, "reason", e)))
+    try:
+        return read(data)._replace(status=200)
+    except (AttributeError, IndexError, KeyError, TypeError, ValueError):  # a 200 with a body of another shape
+        return _failed("other", "the provider's reply could not be read", 200)
+
+
 class Stop(Exception):
     pass
 
 
-def claude_class(text):
-    """The class in Claude's answer: 'off topic', 'Off-topic.' and 'offtopic' all count as off-topic."""
+def answer_class(text):
+    """The class in the model's answer: 'off topic', 'Off-topic.' and 'offtopic' all count as off-topic."""
     words = re.findall(r"[a-z]+", text.lower())
     if words[:2] == ["off", "topic"] or words[:1] == ["offtopic"]:
         return "off-topic"
     return words[0] if words and words[0] in CLASSES else "(other)"
 
 
-def ask_claude(key, message):
-    # Haiku 5.5 thinks before it answers by default, and its thinking counts in max_tokens: with 10 tokens, it
-    # could stop before writing the class. Sorting needs no thinking.
-    body = {"model": CLAUDE_MODEL, "max_tokens": 10, "thinking": {"type": "disabled"},
-            "system": CLAUDE_INSTRUCTIONS, "messages": [{"role": "user", "content": message}]}
-    request = urllib.request.Request("https://api.anthropic.com/v1/messages", data=json.dumps(body).encode(),
-                                     headers={"x-api-key": key, "anthropic-version": "2023-06-01",
-                                              "content-type": "application/json"})
+def stop_sentence(provider, model, reply):
+    """What to tell the person when the test cannot go on."""
+    detail = reply.message or "no detail"
+    if provider is ANTHROPIC:
+        if reply.status is None:
+            return f"No answer from Claude ({reply.message}). Check the network and try again."
+        if reply.status == 401:
+            return f"Claude refused the key (HTTP {reply.status}). Check your key with workshop-login."
+        if reply.status in (429, 529) or reply.status >= 500:
+            return f"Claude is busy (HTTP {reply.status}). Wait a minute and type ./sorter claude again."
+        return (f"Claude refused the request (HTTP {reply.status}): {detail}. "
+                "Show this message to the facilitator (the spending limit of the room, for example).")
+    detail = detail.rstrip(". ")
+    code = f" (HTTP {reply.status})" if reply.status not in (None, 200) else ""
+    if reply.kind == "network":
+        return f"No answer from OpenRouter ({reply.message}). Check the network and try again."
+    if reply.kind == "key" and reply.status == 401:
+        return "OpenRouter refused the key. Check your key with workshop-login."
+    if reply.kind == "key":
+        return (f"OpenRouter refused the request{code}: {detail}. Check your key with workshop-login. "
+                "If the key is right, show this message to the facilitator.")
+    if reply.kind == "credits":
+        return (f"OpenRouter says this account has no credit left: {detail}. "
+                "Show this message to the facilitator.")
+    if reply.kind == "limit":
+        return f"A spending limit stopped the test: {detail}. Show this message to the facilitator."
+    if reply.kind == "model":
+        return (f"No company can run {model} for this test: {detail}. The workshop only allows companies that do not "
+                "keep the messages. This does not mean busy, so waiting will not help: choose another model with "
+                "WORKSHOP_SORTER_MODEL, or show this message to the facilitator.")
+    if reply.kind == "busy":
+        return f"{model} is busy{code}: {detail}. Wait a minute and type ./sorter compare again."
+    return f"OpenRouter refused the request{code}: {detail}. Show this message to the facilitator."
+
+
+def ask_model(key, model, message):
+    """ask(), then what to do when it fails: wait and try again if that can help, raise Stop if the whole test must
+    end. On OpenRouter, a failure that may concern one message comes back as a Reply: the other messages can still go.
+    Only a 401 is surely the key. The words of other refusals are not known in advance (a filter may answer 400 or 403
+    with any words), and the test messages include people in distress: such a message counts as not sorted, and the
+    run goes on, so that the other emergencies are tested too."""
+    provider = provider_of(key)
+    url = os.environ.get("WORKSHOP_SORTER_URL") or None
     for attempt in range(4):
-        try:
-            with urllib.request.urlopen(request, timeout=60) as response:
-                return json.load(response)
-        except urllib.error.HTTPError as e:
-            try:
-                detail = (json.load(e).get("error") or {}).get("message", "")
-            except Exception:
-                detail = ""
-            busy = e.code in (429, 529) or e.code >= 500
-            if busy and attempt < 3:        # too many pairs at once, or Claude overloaded: wait and try again
-                try:
-                    wait = float(e.headers.get("retry-after"))
-                except (TypeError, ValueError):     # missing, or a date
-                    wait = 5 * 2 ** attempt
-                time.sleep(max(0.0, min(wait, 60.0)))
-                continue
-            if e.code == 401:
-                raise Stop(f"Claude refused the key (HTTP {e.code}). Check your key with workshop-login.")
-            if busy:
-                raise Stop(f"Claude is busy (HTTP {e.code}). Wait a minute and type ./sorter claude again.")
-            raise Stop(f"Claude refused the request (HTTP {e.code}): {detail or 'no detail'}. "
-                       "Show this message to the facilitator (the spending limit of the room, for example).")
-        except (urllib.error.URLError, OSError, http.client.HTTPException, ValueError) as e:
-            # ValueError: an answer cut in the middle, that is not JSON
-            if attempt < 3:
-                time.sleep(5)
-                continue
-            raise Stop(f"No answer from Claude ({getattr(e, 'reason', e)}). Check the network and try again.")
+        # Haiku 5.5 thinks before it answers by default, and its thinking counts in max_tokens: with 10 tokens, it
+        # could stop before writing the class. Sorting needs no thinking.
+        reply = ask(key, CLAUDE_INSTRUCTIONS, message, model, max_tokens=10, effort="none", url=url, timeout=60)
+        if reply.stop != "error":
+            return reply
+        if provider is OPENROUTER and (reply.kind in ("refused", "other")
+                                       or (reply.kind == "key" and reply.status != 401)):
+            return reply
+        one_message = provider is OPENROUTER and reply.status == 200
+        if provider is ANTHROPIC:
+            busy = reply.status is not None and (reply.status in (429, 529) or reply.status >= 500)
+        else:
+            busy = reply.kind == "busy"
+        tries = 1 if one_message else 3     # an answer with an error comes fast: do not wait long for each message
+        if (busy or reply.kind == "network") and attempt < tries:
+            # Too many pairs at once, or the model overloaded: wait and try again.
+            wait = reply.retry_after if reply.retry_after is not None else 5 * 2 ** attempt
+            time.sleep(min(wait, 60.0) if busy else 5)
+            continue
+        if one_message and busy:
+            return reply
+        raise Stop(stop_sentence(provider, model, reply))
 
 
-def cmd_claude():
-    key_file = Path.home() / ".workshop-key"
-    if not key_file.is_file():
+def class_of(reply):
+    """(class, None), or (UNSORTED, why). A message that got no class is never counted as an answer: the test messages
+    include people in distress, and these are the messages a filter may block."""
+    if reply.kind == "refused":
+        return UNSORTED, "blocked by a safety filter, or refused by the model"
+    if reply.stop == "error":
+        return UNSORTED, f"an error from the company that runs the model ({(reply.message or 'no detail')[:120]})"
+    label = answer_class(reply.text)
+    if label != "(other)":
+        return label, None
+    if reply.stop == "length":
+        return UNSORTED, "the answer was cut off before the class"
+    if not reply.text.strip():
+        return UNSORTED, "the answer came back empty"
+    return "(other)", None
+
+
+def cmd_compare():
+    key = read_key()
+    if not key:
         fail("No key yet. Type: workshop-login")
-    key = key_file.read_text(encoding="utf-8").strip()
-    if not key.startswith("sk-ant-"):
-        fail("This comparison needs an Anthropic key (it starts with sk-ant-). Ask the facilitator for one, then "
-             "type: workshop-login")
+    provider = provider_of(key)
+    if provider is None:
+        fail("This comparison needs an Anthropic key (it starts with sk-ant-) or an OpenRouter key (it starts with "
+             "sk-or-). Ask the facilitator for one, then type: workshop-login")
+    model = os.environ.get("WORKSHOP_SORTER_MODEL") or provider.small
     test = need(read_messages(TEST), TEST)
-    results, tokens_in, tokens_out, t0 = [], 0, 0, time.time()
-    print(f"Claude ({CLAUDE_MODEL}) sorts the {len(test)} test messages from a description of the classes, "
+    results, tokens_in, tokens_out, cost, no_cost, t0 = [], 0, 0, 0.0, 0, time.time()
+    name = f"Claude ({model})" if provider is ANTHROPIC else model
+    print(f"{name} sorts the {len(test)} test messages from a description of the classes, "
           "with no examples…", flush=True)
-    stopped = None
+    stopped = failure = None
+    answered = False
     for message, expected in test:
         try:
-            data = ask_claude(key, message)
+            reply = ask_model(key, model, message)
         except Stop as e:
             stopped = str(e)
             break
         except KeyboardInterrupt:
             stopped = "Stopped with Ctrl+C."
             break
-        usage = data.get("usage") or {}
-        tokens_in += usage.get("input_tokens", 0)
-        tokens_out += usage.get("output_tokens", 0)
-        text = "".join(b.get("text", "") for b in data.get("content") or [] if b.get("type") == "text")
-        results.append((message, expected, claude_class(text), None))     # Claude gives no confidence
+        tokens_in += reply.tokens_in
+        tokens_out += reply.tokens_out
+        if isinstance(reply.cost, (int, float)):
+            cost += reply.cost
+        elif reply.stop != "error":     # a request that failed may have cost nothing
+            no_cost += 1
+        if reply.stop == "error":
+            failure = reply
+        else:
+            answered = True
+        label, why = class_of(reply)
+        results.append((message, expected, label, why))     # the model gives no confidence
     seconds = time.time() - t0
-    cost = (tokens_in * CLAUDE_PRICES[0] + tokens_out * CLAUDE_PRICES[1]) / 1_000_000
     if stopped:
         print(stopped, file=sys.stderr)
         if not results:
             sys.exit(1)
         print(f"Stopped after {len(results)} of {len(test)} messages. The answers so far:")
-    table(results)
+    table(results, "Claude's answer" if provider is ANTHROPIC else f"the answer of {model}")
+    if provider is ANTHROPIC:
+        cost = (tokens_in * CLAUDE_PRICES[0] + tokens_out * CLAUDE_PRICES[1]) / 1_000_000
+        spent = f"Estimated cost: ${cost:.4f}, so about ${cost / len(results) * 1000:.2f} per 1,000 messages."
+    elif no_cost:
+        spent = f"Cost given by OpenRouter: ${cost:.4f}, too low: it gave no cost for {no_cost} message(s)."
+    else:
+        spent = f"Cost given by OpenRouter: ${cost:.4f}, so about ${cost / len(results) * 1000:.2f} per 1,000 messages."
     print(f"\nTime: {seconds:.0f} s ({seconds / len(results):.1f} s per message). Tokens: {tokens_in} in, "
-          f"{tokens_out} out. Estimated cost: ${cost:.4f}, so about ${cost / len(results) * 1000:.2f} per 1,000 "
-          "messages.")
+          f"{tokens_out} out. {spent}")
     print("The fine-tuned model: no cost per message, and it works without the network.")
-    if stopped:
+    if failure and not answered:    # refused every time: this is about the key or the model, not about one message
+        print(stop_sentence(provider, model, failure), file=sys.stderr)
+    if stopped or any(p == UNSORTED for _, _, p, _ in results):
         sys.exit(1)
 
 
@@ -510,10 +756,13 @@ def main(argv):
         cmd_test()
     elif command == "try":
         cmd_try(" ".join(argv[1:]).strip() or None)
-    elif command == "claude" and len(argv) == 1:
-        cmd_claude()
+    elif command in ("compare", "claude") and len(argv) == 1:
+        cmd_compare()
     else:
-        print(__doc__.strip().split("\n\nThe four classes")[0])
+        help_text = __doc__.strip().split("\n\nThe four classes")[0]
+        if provider_of(read_key()) is OPENROUTER:   # with this key, ./sorter claude does not call Claude
+            help_text = "\n".join(line for line in help_text.split("\n") if "./sorter claude" not in line)
+        print(help_text)
 
 
 if __name__ == "__main__":
