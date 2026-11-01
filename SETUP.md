@@ -123,6 +123,8 @@ Key received: sk-ant-…a1b2 (… characters). Testing it…
 Key OK (Claude Code, Anthropic, model claude-sonnet-5-5). You can start: workshop bare
 ```
 
+In workshop 6, the line ends with `workshop-start 6`.
+
 If you see another message, look at [Troubleshooting](#troubleshooting).
 
 ### Step 4 - Your first conversation
@@ -138,8 +140,10 @@ If you see another message, look at [Troubleshooting](#troubleshooting).
    You should see this line, then the screen of Claude Code:
 
    ```
-   Workshop: mode bare. To quit: press Ctrl+C twice. Other modes: workshop bare | A | B | C | D | E | F
+   Workshop: mode bare. To quit: press Ctrl+C twice. Other modes: workshop bare | A | B | C
    ```
+
+   The list shows the modes of this repository: it grows from one workshop to the next.
 
 2. **The first time**, a few screens come one after the other. None of them is a problem:
    - your **browser** may ask whether the page can use the fonts installed on your computer:
@@ -286,6 +290,9 @@ was saved, but it does not work. Tell the facilitator.
 did not answer during the test. Your key is saved: try `workshop bare`. If it fails, ask the
 facilitator.
 
+**`Anthropic refuses this key (HTTP 401). Your earlier key is kept.`** - The new key was not
+saved: the chatbot still uses your earlier key. Check the new one with the facilitator.
+
 **`Key saved, but the test answered HTTP <code> (model <model>). Tell the facilitator.`** - Show
 the message to the facilitator.
 
@@ -294,6 +301,10 @@ the message to the facilitator.
 
 **`Unknown mode: Z. Modes: bare, A, B, C, D, E, F (workshop help).`** - Check the letter after
 `workshop` or `replay`.
+
+**`Mode D comes with workshop 4. This repository does not have its files.`** - Each workshop has
+its own repository. Here, use a mode of the list shown when the chatbot starts. `workshop` alone
+means mode D: type the mode, for example `workshop A`.
 
 **"I cannot leave the conversation!"** - Don't panic. Press `Ctrl+C` twice. (`/exit` works only
 from mode C on; in modes bare, A and B it says "Unknown command".)
@@ -307,7 +318,7 @@ one `*` per character. Paste it once, then press Enter.
 key, then ask the facilitator.
 
 **`Warning: the model looked at the test material.`** - The model opened `test-questions.md`,
-`answers/` or `examples/` to answer. It may have copied the expected answer: score this answer
+`scores.md`, `answers/` or `examples/` to answer. It may have copied the expected answer: score this answer
 0.
 
 **`replay` takes a long time.** - Each question is a new conversation. You can go on working in
