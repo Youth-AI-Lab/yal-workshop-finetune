@@ -53,8 +53,8 @@ use it because it **shows everything**: what the model reads, searches and does.
 > use OpenCode too: `workshop-login --engine opencode`.
 
 > ⚠️ **Important.** **With young people**, type `workshop-login --europe`. Requests then go only to
-> zero-data-retention companies (they say they store nothing) hosted in Europe, with Mistral Small
-> by default. OpenRouter itself may still handle them elsewhere, and accounts and billing may stay
+> Mistral, hosted in Europe, with zero data retention (it says it stores nothing).
+> The default model is Mistral Small. OpenRouter itself may still handle them elsewhere, and accounts and billing may stay
 > in the US: keeping the handling in Europe needs a Business plan, which these commands do not
 > support. The setting does not lift OpenRouter's 18+ rule or section 5.2 of its terms, and flagged
 > content may be kept. A chatbot already open keeps its old rule: close it and start it again. See
@@ -355,7 +355,7 @@ on it. Some of the companies left may still keep the questions for a time. None 
 model now. In `replay`, the line says
 `the model is busy, or no company can serve it now`: try again later, or ask the facilitator.
 
-**`Key saved, but no company hosted in Europe serves the model <model> with zero data retention. Choose another model, for example: workshop-login --model <name>`** -
+**`Key saved, but Mistral does not serve the model <model> in Europe with zero data retention. Choose another model, for example: workshop-login --model <name>`** -
 You turned on `workshop-login --europe`, and this model has no such company. Type the command the
 message gives you.
 

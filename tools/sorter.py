@@ -438,9 +438,9 @@ PROVIDERS = (ANTHROPIC, OPENROUTER)
 # for a time. A request that no company can serve then fails with 404 or 503.
 ROUTING = {"data_collection": "deny"}
 
-# workshop-login --europe: the endpoints in Europe with zero data retention and no safety retention.
+# workshop-login --europe: Mistral alone, in Europe, with zero data retention.
 # This chooses where the model runs, not where OpenRouter handles the request.
-EUROPE_ENDPOINTS = ["mistral/eu", "amazon-bedrock/eu-west-1", "azure/eu", "azure/swedencentral", "google-vertex/europe"]
+EUROPE_ENDPOINTS = ["mistral/eu"]
 
 # text: the answer. tokens_in, tokens_out: as billed. cost: what the provider says the call cost, or None.
 # stop: end, length, refusal or error. kind: None when the call worked, otherwise one of
