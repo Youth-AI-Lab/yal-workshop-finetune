@@ -127,7 +127,7 @@ All of these are in your Codespace, in the file list on the left:
   today.
 - `messages/test.md`: the test messages. The model never sees them while it learns.
 - `sorter`: the command of the day (type `./sorter` to see what it can do).
-- `tools/sorter.py`: the program behind it, about 500 lines of Python, if you are curious.
+- `tools/sorter.py`: the program behind it, about 800 lines of Python, if you are curious.
 - `SETUP.md`: setup and common problems of the whole series.
 
 ---
