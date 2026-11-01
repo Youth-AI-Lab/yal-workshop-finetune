@@ -1,6 +1,7 @@
 <!-- The TEST messages: the model never sees them while it learns (./sorter test).
      Ideally written by ANOTHER pair, who has not read your examples. Same format as examples.md.
-     The messages below are a start, written for this workshop: replace them with the other pair's. -->
+     The messages below are a start, written for this workshop: replace them with the other pair's.
+     Invented messages only, nothing about a real person: ./sorter claude sends each one to Anthropic. -->
 
 ## topic
 - Which plants burn less around a house?

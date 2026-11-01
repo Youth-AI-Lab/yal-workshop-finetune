@@ -26,7 +26,7 @@ The page of each workshop is its `README.md`.
 ### Your environment
 
 You work in a **GitHub Codespace**: a text editor (VS Code) running in your browser, on a
-computer of GitHub. Everything is already installed. You need **one free GitHub account per
+computer of GitHub. The editor and the terminal are ready. (Workshop 6 installs its own libraries with `./sorter setup`.) You need **one free GitHub account per
 pair**. The facilitator gives each pair an **API key**: a long password that lets your
 Codespace use Anthropic's model. The facilitator caps what the keys can spend, and each key only
 works for a short time.
@@ -71,7 +71,7 @@ did it at an earlier workshop, go to step 2.
 
 ### Step 2 - Open your Codespace
 
-1. **Open the Codespace link** at the top of the README of your workshop. For workshop 1:
+1. **Open the Codespace link** at the top of the README of your workshop. Each workshop has its own link. For workshop 1:
 
    👉 **https://codespaces.new/Youth-AI-Lab/yal-workshop-preprompt**
 
@@ -245,7 +245,7 @@ Each word is explained again the first time a workshop uses it.
 | Word | What it means here |
 |---|---|
 | **Kit** | The repository with everything the first five workshops use, in one place: [yal-workshop-kit](https://github.com/Youth-AI-Lab/yal-workshop-kit). Each workshop has its own repository, with only what it needs. |
-| **Model** | The program that writes the answers. Here: Claude Sonnet, the same for every pair. |
+| **Model** | A program whose behaviour comes from numbers found by training. In workshops 1 to 5, Claude Sonnet writes the answers, the same for every pair. In workshop 6, a small model chooses a class. |
 | **Context** (or **context window**) | Everything the model reads before it answers. It has a maximum size: here, 200,000 tokens. |
 | **Token** | The unit used to measure text for a model: a piece of a word. On average, 4 characters of English text. |
 | **System prompt** | Instructions the model reads at the start of every conversation: who it is, its rules. |
@@ -287,8 +287,8 @@ or type `workshop-login` and paste an Anthropic key.
 was saved, but it does not work. Tell the facilitator.
 
 **`Key saved, but Anthropic could not be reached (network?). Try: workshop bare`** - The network
-did not answer during the test. Your key is saved: try `workshop bare`. If it fails, ask the
-facilitator.
+did not answer during the test. Your key is saved: try `workshop bare` (in workshop 6, the
+message says `workshop-start 6`). If it fails, ask the facilitator.
 
 **`Anthropic refuses this key (HTTP 401). Your earlier key is kept.`** - The new key was not
 saved: the chatbot still uses your earlier key. Check the new one with the facilitator.

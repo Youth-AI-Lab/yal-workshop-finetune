@@ -1,6 +1,6 @@
 <!-- The EXAMPLES the model learns from (./sorter train).
      Under each heading, one message per line, starting with "- ", in any language, written the way
-     a young person or a resident would really write it: short, long, with mistakes, in slang.
+     a young person or a resident would really write it: 15 words at most, with mistakes, in slang.
      The four headings must stay exactly: ## topic, ## today, ## urgent, ## off-topic.
      The messages below are a start, written for this workshop: add yours, change them, remove them.
      Never copy here a message of test.md: the test would then measure memory, not understanding. -->

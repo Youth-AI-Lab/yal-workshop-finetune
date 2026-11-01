@@ -10,10 +10,10 @@ each message before the chatbot sees it. Run it with ./sorter (the file next to 
 
 The four classes (headings of messages/examples.md and messages/test.md):
     topic       a question about the chatbot's topic: the chatbot answers it
-    today       asks about the situation of the moment (danger level today, tonight, this weekend): a live tool
-                answers it (workshop 4)
+    today       asks about the situation of the moment (danger level today, tonight, this weekend): the chatbot
+                answers with the live tool of the day (workshop 4)
     urgent      a fire happening now, or someone in danger or distress: a fixed safety answer, at once
-    off-topic   anything else: a polite refusal that still gives the emergency number, without spending tokens
+    off-topic   anything else: a polite refusal that still says who can help, without spending tokens
 
 Nothing here changes the chatbot of the earlier workshops: this is a separate tool, to see what fine-tuning
 a small model is, and when it is worth it.
@@ -23,6 +23,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import sys
 import time
 import urllib.error
@@ -46,16 +47,19 @@ TEST = HERE / "messages" / "test.md"
 BASE = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 REVISION = "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
 CLASSES = ["topic", "today", "urgent", "off-topic"]
+EMERGENCY = "112"     # the European number: check the one of your country
 WHAT_HAPPENS = {
     "topic": "the chatbot answers it, with its instructions and its knowledge",
-    "today": "a live tool answers it (the level of the moment, from the official source: workshop 4)",
-    "urgent": "a fixed safety answer, at once: emergency number 112, or an adult they trust",
-    # A message wrongly sorted here must still reach help: the refusal always ends with the emergency number.
-    "off-topic": "a polite refusal that still gives the emergency number 112, without calling the chatbot "
+    "today": "the chatbot answers with the live tool of the day (official source: workshop 4)",
+    "urgent": f"a fixed safety answer, at once: emergency number {EMERGENCY}, and an adult they trust",
+    # A message wrongly sorted here must still reach help: the refusal always ends with the emergency number and
+    # an adult they trust, the two that Feurisson's safety rule names.
+    "off-topic": f"a polite refusal that still says who can help ({EMERGENCY}, an adult they trust), with no chatbot "
                  "(no tokens spent)",
 }
 UNSURE = 0.5          # below this confidence, the sorter says it is not sure
 LONG = 15             # words: past this, the sorter does not decide alone (see route)
+UNSAFE = "  <- an emergency that would not get the safety answer"
 CLAUDE_MODEL = os.environ.get("WORKSHOP_SORTER_CLAUDE", "claude-haiku-5-5")
 CLAUDE_PRICES = (0.10, 0.50)    # $ per million tokens in and out (claude-haiku-5-5, price list 2026-10-31)
 
@@ -77,7 +81,7 @@ def read_messages(path):
     pairs, current, problems = [], None, []
     for n, line in enumerate(text.splitlines(), 1):
         line = line.strip()
-        if not line or line == "-":
+        if not line:
             continue
         if line.startswith("<!--"):
             problems.append(f"line {n}: a comment <!-- that is never closed with -->")
@@ -89,6 +93,8 @@ def read_messages(path):
             else:
                 problems.append(f"line {n}: heading '{line}'")
                 current = ""        # its messages are not counted, and not reported a second time
+        elif line == "-":
+            problems.append(f"line {n}: a dash with no message (write the message, or delete the line)")
         elif line.startswith("- "):
             if current is None:
                 problems.append(f"line {n}: a message before the first heading")
@@ -109,6 +115,11 @@ def need(pairs, path):
     return pairs
 
 
+def word_count(text):
+    """Words as a person counts them: in French, a "?" or a "«" stands alone between spaces, and it is not a word."""
+    return sum(any(c.isalnum() for c in w) for w in text.split())
+
+
 def cores():
     """The cores this Codespace may really use: in a container limited to 2 of 16, os.cpu_count() says 16, and
     16 threads fighting for 2 cores made training ten times slower (measured)."""
@@ -127,8 +138,10 @@ def cores():
 def check_libraries():
     try:
         import setfit  # noqa: F401
+        import torch
     except ImportError:
         fail("The libraries are not installed yet. Type: ./sorter setup")
+    torch.set_num_threads(cores())
 
 
 def from_hub(load):
@@ -141,11 +154,21 @@ def from_hub(load):
 
 
 def same_text(a, b):
-    return re.sub(r"\W+", " ", a.lower()).strip() == re.sub(r"\W+", " ", b.lower()).strip()
+    """Same words, whatever the case and the punctuation. Two messages with no word (two emojis) are not the same."""
+    a, b = (re.sub(r"\W+", " ", x.lower()).strip() for x in (a, b))
+    return a == b != ""
 
 
-def leaks(train, test):
-    return [m for m, _ in test if any(same_text(m, t) for t, _ in train)]
+def warn_leaks(train, test):
+    leaked = [m for m, _ in test if any(same_text(m, t) for t, _ in train)]
+    if leaked:
+        print(f"\nWarning: {len(leaked)} test message(s) are also in the examples: the score says little. "
+              f"Rewrite them in messages/test.md: {leaked[0]}")
+
+
+def clashes(train):
+    """Messages under two headings: the model would learn two answers for one message."""
+    return [(m, h, c) for i, (m, c) in enumerate(train) for t, h in train[:i] if h != c and same_text(m, t)]
 
 
 def table(results):
@@ -157,15 +180,21 @@ def table(results):
     print(" " * 11 + "".join(f"{c:>11}" for c in columns))
     for e in CLASSES:
         print(f"{e:>11}" + "".join(f"{sum(1 for _, x, p, _ in results if x == e and p == c):>11}" for c in columns))
+    if "(other)" in columns:
+        print("(other): Claude's answer was not one of the four classes, so the message counts as a mistake.")
     mistakes = [(m, e, p, c) for m, e, p, c in results if e != p]
     if mistakes:
         print("\nMistakes:")
         for m, e, p, c in mistakes:
-            danger = "  <- an emergency that would not get the safety answer" if e == "urgent" else ""
+            danger = UNSAFE if e == "urgent" else ""
             confidence = f"({c:.2f})  " if c is not None else ""
             print(f"  expected {e:<9} chose {p:<9} {confidence}{m}{danger}")
     missed = sum(1 for _, e, p, _ in results if e == "urgent" and p != "urgent")
-    print(f"\nEmergencies missed: {missed}. This is the mistake that matters most.")
+    if any(e == "urgent" for _, e, _, _ in results):
+        print(f"\nEmergencies missed: {missed}. This is the mistake that matters most.")
+    else:
+        print("\nEmergencies missed: none tested. No message under ## urgent was tested, so this score says "
+              "nothing about emergencies.")
 
 
 def cmd_setup():
@@ -192,11 +221,11 @@ def cmd_baseline():
     print("WITHOUT training: each message gets the class of its closest example in messages/examples.md.")
     table(results)
     print("\nNext: ./sorter train, then ./sorter test, and compare.")
+    warn_leaks(train, test)
 
 
 def cmd_train():
     check_libraries()
-    import torch
     from datasets import Dataset
     from setfit import SetFitModel, Trainer, TrainingArguments, logging as setfit_logging
     from transformers.trainer_callback import PrinterCallback, ProgressCallback
@@ -204,15 +233,17 @@ def cmd_train():
     # Keep the progress bar, without the lines of numbers (loss, learning rate) printed with it.
     ProgressCallback.on_log = PrinterCallback.on_log = lambda self, *args, **kwargs: None
     train, test = read_messages(EXAMPLES), read_messages(TEST)
+    read_at = EXAMPLES.stat().st_mtime_ns
     counts = {c: sum(1 for _, x in train if x == c) for c in CLASSES}
     missing = [c for c, n in counts.items() if n < 2]
     if missing:
         fail(f"Each class needs at least 2 examples in messages/examples.md (missing: {', '.join(missing)}).")
-    leaked = leaks(train, test)
-    if leaked:
-        print(f"Warning: {len(leaked)} test message(s) are also in the examples: the test will look better than "
-              f"it is. Rewrite them in messages/test.md: {leaked[0]}")
-    torch.set_num_threads(cores())
+    for message, first, second in clashes(train):
+        print(f"Warning: the same message is under ## {first} and ## {second} in messages/examples.md. Keep it under "
+              f"the right heading only: {message}")
+    for message in [m for m, _ in train if word_count(m) > LONG]:
+        print(f"Warning: this example has more than {LONG} words. Shorten it in messages/examples.md: {message[:80]}")
+    warn_leaks(train, test)
     print(f"Fine-tuning on {len(train)} examples ({', '.join(f'{c} {n}' for c, n in counts.items())})…", flush=True)
     model = from_hub(lambda: SetFitModel.from_pretrained(BASE, revision=REVISION, labels=sorted(CLASSES)))
     t0 = time.time()
@@ -226,16 +257,28 @@ def cmd_train():
     if trainer.st_trainer.pop_callback(PrinterCallback):
         trainer.st_trainer.add_callback(ProgressCallback)
     trainer.train()
-    model.save_pretrained(str(MODEL_DIR))
+    # A new folder first: a save cut halfway must leave the old model whole.
+    new, old = HOME / "model-new", HOME / "model-old"
+    for folder in (new, old):
+        shutil.rmtree(folder, ignore_errors=True)
+    model.save_pretrained(str(new))
+    # Dated like the examples it learnt from: an edit made during the training must count as newer than the model.
+    os.utime(new / "model_head.pkl", ns=(read_at, read_at))
+    if MODEL_DIR.exists():
+        MODEL_DIR.rename(old)
+    new.rename(MODEL_DIR)
+    shutil.rmtree(old, ignore_errors=True)
     print(f"\nFine-tuned in {time.time() - t0:.0f} s. Next: ./sorter test")
 
 
 def load_model():
     check_libraries()
-    import torch
-    torch.set_num_threads(cores())
-    if not (MODEL_DIR / "model_head.pkl").is_file():
+    head = MODEL_DIR / "model_head.pkl"
+    if not head.is_file():
         fail("No fine-tuned model yet. Type: ./sorter train")
+    if EXAMPLES.is_file() and EXAMPLES.stat().st_mtime_ns > head.stat().st_mtime_ns:
+        print("Warning: messages/examples.md changed after the last training, so this is the old model. "
+              "Type: ./sorter train")
     from setfit import SetFitModel
     return SetFitModel.from_pretrained(str(MODEL_DIR), device="cpu", local_files_only=True)
 
@@ -251,7 +294,8 @@ def class_names(model):
 
 def predict(model, messages):
     """The class of each message. The model averages the words of a message, so a cry for help inside a story
-    disappears: each sentence of a longer message is also read alone, and an emergency in one of them counts."""
+    disappears: each sentence of a longer message is also read alone. A sentence whose largest share is urgent counts
+    as an emergency, the same rule as for a message alone."""
     probas = model.predict_proba(messages).tolist()
     names = class_names(model)
     urgent = names.index("urgent")
@@ -259,13 +303,19 @@ def predict(model, messages):
     for message, row in zip(messages, probas):
         i = max(range(len(row)), key=row.__getitem__)
         label, confidence = names[i], row[i]
-        sentences = [s for s in re.split(r"(?<=[.!?…])\s+", message) if s]
+        sentences = [s for s in re.split(r"(?<=[.!?…])\s+|\n+", message) if word_count(s)]
         if len(sentences) > 1 and (label != "urgent" or confidence < UNSURE):
-            worst = max(r[urgent] for r in model.predict_proba(sentences).tolist())
-            if worst >= UNSURE:
-                label, confidence = "urgent", worst
+            shares = [r[urgent] for r in model.predict_proba(sentences).tolist() if r[urgent] == max(r)]
+            if shares and (label != "urgent" or max(shares) > confidence):
+                label, confidence = "urgent", max(shares)
         out.append((label, confidence))
     return out
+
+
+def listed(results):
+    for m, e, p, c in results:
+        danger = UNSAFE if e == "urgent" and (p != "urgent" or word_count(m) > LONG) else ""
+        print(f"  ({c:.2f})  {m}{danger}")
 
 
 def cmd_test():
@@ -275,32 +325,40 @@ def cmd_test():
     chosen = predict(model, [m for m, _ in test])
     ms = (time.time() - t0) / len(test) * 1000
     print(f"The FINE-TUNED model, on the {len(test)} messages of messages/test.md ({ms:.0f} ms per message):")
-    table([(m, e, p, c) for (m, e), (p, c) in zip(test, chosen)])
-    unsure = sum(1 for p, c in chosen if c < UNSURE and p != "urgent")
+    results = [(m, e, p, c) for (m, e), (p, c) in zip(test, chosen)]
+    table(results)
+    # The same three cases as route(): a long message is reported as long only.
+    long = [r for r in results if word_count(r[0]) > LONG and (r[2] != "urgent" or r[3] < UNSURE)]
+    short = [r for r in results if r not in long and r[3] < UNSURE]
+    unsure = [r for r in short if r[2] != "urgent"]
     if unsure:
-        print(f"Not sure (below {UNSURE}) for {unsure} message(s): a real chatbot would pass them to the chatbot, "
-              "whose own rules also cover emergencies.")
-    long = sum(1 for (m, _), (p, c) in zip(test, chosen) if len(m.split()) > LONG and (p != "urgent" or c < UNSURE))
+        print(f"Not sure (below {UNSURE}) for {len(unsure)} message(s): a real chatbot would pass them to the "
+              "chatbot, whose own rules must also cover emergencies.")
+        listed(unsure)
     if long:
-        print(f"Too long to sort (more than {LONG} words) for {long} message(s): a real chatbot would pass them to "
-              "the chatbot too.")
-    if leaks(train, test):
-        print("\nWarning: some test messages are also in the examples: this score is too good.")
+        print(f"Too long to sort (more than {LONG} words) for {len(long)} message(s): a real chatbot would pass them "
+              "to the chatbot.")
+        listed(long)
+    low = [r for r in short if r[1] == r[2] == "urgent"]
+    if low:
+        print(f"Right but below {UNSURE} for {len(low)} emergency message(s): they still get the safety answer.")
+        listed(low)
+    warn_leaks(train, test)
 
 
 def route(label, confidence, message):
     """What a real chatbot would do. Mistakes are not equal: a possible emergency gets the safety answer even
-    when the sorter is not sure; any other doubt goes to the chatbot, whose own rules also cover emergencies. A
-    long message counts as a doubt: the model learnt on short ones, and it stops reading at 128 tokens."""
-    long = len(message.split()) > LONG
+    when the sorter is not sure; any other doubt goes to the chatbot, whose own rules must also cover emergencies.
+    A long message counts as a doubt: the model learnt on short ones, and it stops reading at 128 tokens."""
+    long = word_count(message) > LONG
     if label == "urgent" and (confidence >= UNSURE or not long):
         return WHAT_HAPPENS["urgent"] + ("" if confidence >= UNSURE else " (not sure, but a possible emergency "
                                          "always comes first)")
     if long:
-        return f"too long to sort (more than {LONG} words), so it goes to the chatbot, whose own rules also cover " \
-               "emergencies"
+        return f"too long to sort (more than {LONG} words), so it goes to the chatbot, whose own rules must also " \
+               "cover emergencies"
     if confidence < UNSURE:
-        return f"not sure (below {UNSURE}), so it goes to the chatbot, whose own rules also cover emergencies"
+        return f"not sure (below {UNSURE}), so it goes to the chatbot, whose own rules must also cover emergencies"
     return WHAT_HAPPENS[label]
 
 
@@ -333,6 +391,10 @@ def cmd_try(message=None):
         show(message)
 
 
+# A workshop example, not a checked prompt: on 2026-10-31, in three runs on the test messages of the repository, it
+# sorted two emergencies as off-topic ("Un ragazzo mi minaccia e ho paura", "Someone at school keeps hitting me and
+# I'm afraid"). Before real use, change it, then test it on emergencies, with and without fire, that nobody used to
+# write it.
 CLAUDE_INSTRUCTIONS = """You sort messages sent to a chatbot about wildfire prevention, written in any language.
 Answer with exactly one word, the class:
 topic: a question about wildfires, their prevention, the rules, what to do (the chatbot answers it)
@@ -379,7 +441,7 @@ def ask_claude(key, message):
                     wait = 5 * 2 ** attempt
                 time.sleep(max(0.0, min(wait, 60.0)))
                 continue
-            if e.code in (401, 403):
+            if e.code == 401:
                 raise Stop(f"Claude refused the key (HTTP {e.code}). Check your key with workshop-login.")
             if busy:
                 raise Stop(f"Claude is busy (HTTP {e.code}). Wait a minute and type ./sorter claude again.")
@@ -399,7 +461,8 @@ def cmd_claude():
         fail("No key yet. Type: workshop-login")
     key = key_file.read_text(encoding="utf-8").strip()
     if not key.startswith("sk-ant-"):
-        fail("This comparison needs an Anthropic key (it starts with sk-ant-). Type: workshop-login")
+        fail("This comparison needs an Anthropic key (it starts with sk-ant-). Ask the facilitator for one, then "
+             "type: workshop-login")
     test = need(read_messages(TEST), TEST)
     results, tokens_in, tokens_out, t0 = [], 0, 0, time.time()
     print(f"Claude ({CLAUDE_MODEL}) sorts the {len(test)} test messages from a description of the classes, "

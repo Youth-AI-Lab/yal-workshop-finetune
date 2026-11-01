@@ -12,12 +12,15 @@ if [[ "${1:-}" == setup ]]; then
   echo "Installing the libraries, then the model (about 2 min 30, once per Codespace)…"
   mkdir -p "$home"
   [[ -x "$python" ]] || python3 -m venv "$home/venv"
-  "$home/venv/bin/pip" install -q --disable-pip-version-check -r "$here/tools/requirements.txt"
+  # --require-hashes: only the files listed in tools/requirements.txt, each checked by its fingerprint.
+  # That file also names the extra index of the CPU build of PyTorch.
+  "$home/venv/bin/pip" install -q --disable-pip-version-check --require-hashes -r "$here/tools/requirements.txt"
   echo "Libraries installed ($(( $(date +%s) - start )) s). Downloading the model…"
   exec "$python" "$here/tools/sorter.py" setup
 fi
 if [[ ! -x "$python" ]]; then
-  [[ $# -eq 0 ]] && exec python3 "$here/tools/sorter.py"
+  # The help and ./sorter claude use the standard library only.
+  [[ $# -eq 0 || "${1:-}" == claude ]] && exec python3 "$here/tools/sorter.py" "$@"
   echo "The libraries are not installed yet. Type: ./sorter setup" >&2
   exit 1
 fi
