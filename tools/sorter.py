@@ -163,7 +163,7 @@ def warn_leaks(train, test):
     leaked = [m for m, _ in test if any(same_text(m, t) for t, _ in train)]
     if leaked:
         print(f"\nWarning: {len(leaked)} test message(s) are also in the examples: the score says little. "
-              f"Rewrite them in messages/test.md: {leaked[0]}")
+              f"Reword them, in messages/test.md before your first score, in messages/examples.md after it: {leaked[0]}")
 
 
 def clashes(train):
