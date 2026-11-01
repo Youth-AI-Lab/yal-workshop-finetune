@@ -346,7 +346,8 @@ Do as the message says. In `replay`, the line says
 tries again by itself first. Free models have a quota: on 2026-11-01, 50 requests a day (1,000 once
 the account has bought at least $10 of credits), failed requests included. In our one test, with
 two free models at the same time, `replay` stopped on this error: after modes bare and A for one,
-from the start for the other. One free model alone, with quota left: (not tested).
+from the start for the other. One at a time, with quota left: `cohere/north-mini-code:free` finished
+`replay C`, and `google/gemma-4-26b-a4b-it:free` stopped on three 429s within 10 s.
 
 **`Key saved, but no company can serve the model <model> under the workshop's data rule. Choose another model: workshop-login --models openrouter`** -
 With an OpenRouter key, each request asks to leave out companies that may collect the data or train
@@ -360,7 +361,7 @@ message gives you.
 
 **`Mode B sends the whole kit at once, and this model reads <number> tokens at most.`** -
 The model's window is smaller than the kit. This is the case with `workshop-login --europe`, where
-the default window is 32k. Choose a model with a larger window, or skip mode B.
+the default window is 32k. Skip mode B and go on with the next part of today's page.
 
 **`OpenCode is already open and keeps the old data rule: close it and start it again. A replay stops by itself before its next question.`** -
 You changed `--europe` while OpenCode was running. What you type there still goes out under the old
