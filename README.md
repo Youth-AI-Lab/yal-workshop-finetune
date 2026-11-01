@@ -215,15 +215,24 @@ paraphrase is the same idea in other words. Its page does not say which texts it
 It does one thing: it turns a sentence into a list of 384 numbers. Think of these numbers as an
 address on a map of meaning. An address on a paper map has two numbers; this one has 384, so nobody
 can draw the map, but the idea is the same: **two sentences with the same meaning get close
-addresses**, whatever their words and their language. **Closeness** is a score that can range from -1
-to 1. About 0 means little link, and higher means closer for this model: it does not measure shared
-meaning. This is not the scale of workshop 2, where 0.5 already meant no link. In our test:
+addresses**, whatever their words and their language.
 
-| Sentence | Compared with "Is the forest closed today?" | Closeness |
-|---|---|---|
-| Its French translation | "La forêt est-elle fermée aujourd'hui ?" | 0.995 |
-| The opposite question | "Is the forest open today?" | 0.86 |
-| Something else | "Can you help me with my maths homework?" | 0.04 |
+**Closeness** is a score that measures this. Picture each address as an arrow, from the centre of the
+map to its place. All the arrows have length 1, so only their direction counts. Closeness is the
+**cosine** of the angle between two arrows. To get it, multiply the two lists number by number, then
+add up the results. With 2 numbers instead of 384 (made up for the example), the lists 0.6, 0.8 and
+0.8, 0.6 give 0.6 × 0.8 + 0.8 × 0.6 = 0.96, an angle of 16°. The same direction gives 1, a right
+angle gives 0 (little link), and opposite directions give -1.
+
+Higher means closer for this model: it does not measure shared meaning. Workshop 2 drew the same
+arrows, with another small model and another scale, $(1 + \text{closeness}) / 2$, so 0.5 meant no
+link there. In our test:
+
+| Sentence | Compared with "Is the forest closed today?" | Closeness | Angle (about) |
+|---|---|---|---|
+| Its French translation | "La forêt est-elle fermée aujourd'hui ?" | 0.995 | 6° |
+| The opposite question | "Is the forest open today?" | 0.86 | 31° |
+| Something else | "Can you help me with my maths homework?" | 0.04 | 88° |
 
 The first line shows why one model is enough for all the languages of the room. The second line
 shows its limit: the model gives more weight to "forest" and "today" than to "open" or "closed". For sorting,
@@ -460,11 +469,20 @@ flowchart TD
 **First, the body, with pairs of messages.** The body gives addresses, not classes, so you cannot ask it "which
 class is this?". You can only ask "are these two close?". Pairs turn your examples into that question,
 and they turn a few examples into many training rounds. From 40 examples, it makes 800 pairs: 400 of the same class, and 400 of different classes.
-For each pair it knows the target: closeness 1 for the same class, 0 for different classes. It takes
+For each pair it knows the target: closeness 1 for the same class, 0 for different classes. So training
+tries to turn the arrows: the same direction for the same class, a right angle for different classes.
+It never asks for opposite directions. With our 40 examples, the two pairs shown further down went from
+82° to 59° (same class) and from 58° to 79° (different classes). Training takes
 16 pairs at a time, measures how far their closeness is from the target, and changes the numbers of
 the body a tiny bit. This is the loop of Part 1. With 800 pairs, 16 at a time, there are **50 rounds**,
 the number on the long progress bar. Each example gives 20 pairs, so twice as
 many examples take about twice as long.
+
+The 20 is a setting, not a rule: `num_iterations=10` in `tools/sorter.py` asks for 10 × 40 pairs of each
+kind. Count on paper: each of the 40 messages meets 39 others, and that counts each pair twice, so
+40 × 39 / 2 = 780 different pairs. In a class of 10, it is 10 × 9 / 2 = 45, so 4 × 45 = 180 pairs of the
+same class, and SetFit goes round its list again to reach 400. With 80 examples it makes 1,600 pairs, although
+3,160 different ones exist. That is why the time only doubles.
 
 **Then, the head, with borders.** Now the addresses are better, and the body stops changing. SetFit
 computes the address of each example, then trains the head on these addresses. The head draws the
@@ -536,6 +554,13 @@ test messages the sorter does worse: 30 of 32 with 1 emergency missed, against 3
 50 rounds. A difference of two messages, in one run, proves little. It does show that **a better training score does not guarantee a better sorter**, because it measures pairs, and you care about the class of
 each message.
 
+**How to read these scores.** Take a made-up model that answers closeness 0.5 for every pair, halfway
+between the targets 1 and 0, whatever the messages. Its gap is always 0.5, so its score is 0.5 × 0.5 =
+**0.25**. The two lines of the chart start just above that, at 0.27 and 0.28: before training, the body
+scores no better than this blind answer. Yet in our test, `./sorter baseline` sorts 28 of 32 with that
+same body. The training score asks for closeness 1 and 0, and the baseline only needs the closest
+example to be of the right class.
+
 **Key insight:** the training score is a substitute for what you really want. Training lowers it blindly: a wrong
 heading in `examples.md` is learned just as well as a right one. Only your test, on messages the model
 never saw, tells you whether the sorter got better, and you decide when it is good enough.
@@ -591,6 +616,7 @@ never saw, tells you whether the sorter got better, and you decide when it is go
 
 5. **Compare** with the baseline and with your prediction. Read `Emergencies missed` first, then the
    cells of the table that changed. Your test has 12 messages, so one or two messages prove little.
+   With only 3 emergencies, `Emergencies missed: 0` proves little too: step 8 shows how little.
    Write your baseline score and your first score on the board, with the emergencies missed.
 6. **Look at what the training made.** The facilitator shows this once on the big screen, with:
 
@@ -637,6 +663,15 @@ never saw, tells you whether the sorter got better, and you decide when it is go
    15 words or fewer sorted as `urgent`: it would get the safety answer all the same. Notice "help!!": the
    sorter chose `off-topic`, a real mistake. Confidence says how sure the sorter is, not whether it is
    right: in our test, "Help me please." came out `off-topic` at 0.75, and "aidez moi" at 0.68.
+
+   > ℹ️ **Note.** **What does `Emergencies missed: 0` prove?** It shows that the emergencies of this test
+   > were sorted `urgent`, and nothing about any others. Your test has 3 emergencies. Imagine a
+   > sorter that misses 1 in 10 of all the emergencies people could write (a made-up number). If the 3 in
+   > your test are like random picks, the chance that it catches all of them is 0.9 × 0.9 × 0.9 = 0.73.
+   > So about 3 times out of 4, a sorter that does miss emergencies still shows `Emergencies missed: 0`.
+   > With the 8 emergencies of our test, it still shows 0 about 4 times out of 10 (0.9 multiplied 8 times gives
+   > 0.43). So `0` means "no mistake seen", not "no mistake". Ours did show 0 on those 8, and "help!!"
+   > still came out `off-topic`. That is why you try short cries here.
 
    > 💡 **Tip.** Type the messages after `./sorter try`, not on the same line. On the command line,
    > a `!` between double quotes (`"Au feu !"`) is read by the terminal itself, and the command
