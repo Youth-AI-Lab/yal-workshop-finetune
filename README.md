@@ -41,7 +41,7 @@
 
 In workshops 1 to 5, you gave the chatbot instructions, knowledge, a way to search, tools and a
 wiki. All of it entered the **context**: text that the model reads before it answers. The model
-itself never changed. It stayed the same Claude for everyone, with the same numbers inside. Today,
+itself never changed. It stayed the same model for everyone, with the same numbers inside. Today,
 you change a model. A small one, for one narrow task: **sorting the messages** that people send to a
 chatbot, before the chatbot sees them. The question of the day is:
 
@@ -52,7 +52,7 @@ chatbot, before the chatbot sees them. The question of the day is:
 | **Understand** | 1, 2, 4 | Explain what a classifier does, what training changes inside a model, and why a model that chooses cannot invent an answer. |
 | **Apply** | 3, 4 | Write examples and a test in your language, fine-tune a model on them, and test it. |
 | **Analyse** | 2, 4 | Read a confusion table, and find the mistake that matters most. |
-| **Evaluate** | 5, 6 | Compare your small model with Claude (right answers, speed, cost, what leaves the Codespace), and decide when fine-tuning is worth it. |
+| **Evaluate** | 5, 6 | Compare your small model with a big one (right answers, speed, cost, what leaves the Codespace), and decide when fine-tuning is worth it. |
 
 ### Why this approach?
 
@@ -147,9 +147,10 @@ All of these are in your Codespace, in the file list on the left:
    ```
 
    Paste your key, press Enter. **What you should see:** a line that starts with `Key OK` and ends
-   with `You can start: workshop-start 6`. This makes one small request to Claude Sonnet.
-   After that, only Part 5 uses the key, with Claude Haiku, and it must be an Anthropic key (it starts
-   with `sk-ant-`). If your key fails, tell the facilitator and go on: Parts 1 to 4 do not need it.
+   with `You can start: workshop-start 6`. This makes one small request to Claude Sonnet, or to
+   DeepSeek V4 Flash with an OpenRouter key. After that, only Part 5 uses the key: Claude Haiku with
+   an Anthropic key (it starts with `sk-ant-`), Mistral Small with an OpenRouter key (it starts with
+   `sk-or-`). If your key fails, tell the facilitator and go on: Parts 1 to 4 do not need it.
 3. Get ready for today:
 
    ```bash
@@ -376,7 +377,8 @@ do?"), a person in danger with no fire ("someone is following me"), an off-topic
 weekend?").
 
 One rule for both files: **every message is invented, with nothing about a real person**. In Part 5,
-`./sorter claude` sends each test message to Anthropic.
+`./sorter compare` sends each test message to Anthropic, or through OpenRouter to a company that runs
+the model.
 
 > ℹ️ **Note.** **Keep each message to 15 words at most.** The model gives an address to each [token](https://github.com/Youth-AI-Lab/yal-local-ai-guide/blob/main/how-an-llm-works.md#what-a-token-really-is) (a
 > word or a part of a word), then takes the average, so one urgent sentence is drowned in a long
@@ -605,7 +607,7 @@ never saw, tells you whether the sorter got better, and you decide when it is go
    ![The result of ./sorter test with the messages of the repository: 32 of 32 messages in the right class. 1: the line Emergencies missed, here 0. 2: the line Not sure, for 2 messages.](images/sorter-test.png)
 
    On your own test, you will probably see mistakes. The score on it is your **first score**: the one
-   honest test of your model, and the one you compare with Claude in Part 5. Here, the number in brackets is not a
+   honest test of your model, and the one you compare with the big model in Part 5. Here, the number in brackets is not a
    closeness any more: it is the confidence of the sorter. `Not sure (below 0.5)` lists the messages of 15
    words or fewer with a low confidence, not sorted as `urgent`, whether their class is right or not.
    `Too long to sort` lists longer ones with no sure emergency. `Right but below 0.5` lists emergencies
@@ -746,6 +748,10 @@ Each part does its share, and a test lets you check it.
 > **Goal**: compare your small fine-tuned model with a big model that has never seen your
 > examples, and decide when each is worth it.
 
+> ℹ️ **Note.** **With an OpenRouter key (`sk-or-`)**, the big model is Mistral Small
+> (`mistralai/mistral-small-3.2-24b-instruct`). In the steps of this part, read Mistral Small where
+> it says Claude. The figures stay those of Claude Haiku, unless they name another model.
+
 ### What you will discover
 
 - A big model sorts well from a short description of the classes, with no examples at all.
@@ -755,7 +761,7 @@ Each part does its share, and a test lets you check it.
 ### How can Claude sort without training?
 
 Claude was trained once, by Anthropic, on a very large scale, and nobody changes it for you. To make
-it sort, you do what you did in workshop 1: you write instructions. `./sorter claude` sends it a short
+it sort, you do what you did in workshop 1: you write instructions. `./sorter compare` sends it a short
 description of the four classes, then one test message, and asks for one word. The description
 enters the **context**, as your `AGENTS.md` did. You are back to the question of the series. To read
 this description, open `tools/sorter.py` and search for `CLAUDE_INSTRUCTIONS`.
@@ -777,20 +783,24 @@ can miss what its examples leave out. In both cases, only the test tells you.
 1. Type:
 
    ```bash
-   ./sorter claude
+   ./sorter compare
    ```
 
    Claude (`claude-haiku-5-5`, the smallest current Claude) has never seen your examples.
 
    **What you should see:** the same table, then the time, the tokens and the estimated cost, for the
-   test and for 1,000 messages. In our runs on 2026-10-31, with the messages of the
+   test and for 1,000 messages. In our runs on 2026-10-31 with Claude Haiku, with the messages of the
    repository, the result was the same each time: 30 of 32, and **2 emergencies missed**, "Someone at school
    keeps hitting me and I'm afraid" and "Un ragazzo mi minaccia e ho paura" (a boy threatens me and I
    am afraid), sorted as `off-topic`:
 
-   ![The result of ./sorter claude: 30 of 32 messages in the right class, and two emergencies sorted as off-topic. 1: the line Emergencies missed, here 2. 2: the line Time, with 0.8 s per message, the tokens, and an estimated cost of $0.0007.](images/sorter-claude.png)
+   ![The result with Claude Haiku: 30 of 32 messages in the right class, and two emergencies sorted as off-topic. 1: the line Emergencies missed, here 2. 2: the line Time, with 0.8 s per message, the tokens, and an estimated cost of $0.0007.](images/sorter-claude.png)
 
    That is 0.8 to 0.9 s per message, $0.0007 for the 32 messages, so about $0.02 per 1,000 messages.
+   The picture shows `./sorter claude`, another name for `./sorter compare`.
+   With an OpenRouter key, one run on 2026-11-01 gave 32 of 32 and no emergency missed with
+   `mistralai/mistral-small-3.2-24b-instruct` (18 s, $0.0003), and 30 of 32 and 1 emergency missed
+   with `deepseek/deepseek-v4-flash` (38 s, $0.0002).
 2. Fill in the comparison on the board. For your model, write your **first score** (step 5 of Part 4).
    The improved score is tuned on these test messages, and Claude has never seen them.
 
@@ -801,16 +811,26 @@ can miss what its examples leave out. In both cases, only the test tells you.
    | Time per message | 7 to 9 ms in a batch | |
    | Cost per 1,000 messages | none per message | |
    | Works without the network | yes | no |
-   | Where sorting happens | in the Codespace | at Anthropic |
+   | Where sorting happens | in the Codespace | at Anthropic, or at a company reached through OpenRouter |
    | What it took to set up | your examples, one or two minutes of training | a description of the classes |
 
 > ⚠️ **Important.** **This cost is per message only.** In the Codespace, the sorter runs while you work.
 > In a real chatbot, it needs a computer that stays on, and someone to look after it. We did not measure
 > what this costs. At our rate, Claude would cost about $0.20 for 10,000 messages.
 
-> ℹ️ **Note.** **What leaves the Codespace.** `./sorter claude` sends each test message to Anthropic.
+> ℹ️ **Note.** **What leaves the Codespace.** `./sorter compare` sends each test message to Anthropic,
+> or through OpenRouter to a company that runs the model.
 > Your small model sorts inside the Codespace. But in a real chatbot, `topic`, `today`, unsure and long
 > messages then reach the big model, so for messages that young people write, look at both models.
+
+> ⚠️ **Important.** **With young people and an OpenRouter key**, zero-data-retention models hosted in
+> Europe must be on. Zero data retention: the company says it stores nothing, and OpenRouter does not
+> guarantee it. Turn on the switches in your [privacy settings](https://openrouter.ai/settings/privacy)
+> and choose **Zero retention only** (not tested). Europe is not a switch: it needs a Business or
+> Enterprise plan, and the workshop commands cannot do it yet. No setting lifts OpenRouter's rule: "You
+> must be at least 18 years of age to use the Service." Read
+> [OpenRouter guide, Part 8](https://github.com/Youth-AI-Lab/yal-openrouter-guide#part-8---data-and-young-people)
+> before any session with young people.
 
 > 💡 **Tip.** **Checkpoint**: the table is full, and you can say in one sentence when you would choose
 > each.
@@ -905,7 +925,7 @@ This shows how the rule works: it is not a detection rate.
 
 **`./sorter setup` stops on a network error, or `The model could not be downloaded or opened`.** -
 Type `./sorter setup` again: it starts from where it stopped. If it keeps failing, tell the facilitator.
-`./sorter claude` (Part 5) works without the setup.
+`./sorter compare` (Part 5) works without the setup.
 
 **`messages/…: … line(s) to fix`** - The sorter lists each line it cannot read, with its number.
 The headings must be exactly `## topic`, `## today`, `## urgent`, `## off-topic`. Each message
@@ -931,13 +951,15 @@ it under the right heading only, or shorten it, then fine-tune again.
 model. Type `./sorter train`, then `./sorter test`. After 1 h 15 of the session, no training: `./sorter
 try` still works, with the old model.
 
-**`./sorter claude` says the key was refused, or `This comparison needs an Anthropic key`.** - Type
-`workshop-login` and paste the Anthropic key from the facilitator (it starts with `sk-ant-`).
+**`./sorter compare` says the key was refused, or `This comparison needs an Anthropic key (it starts
+with sk-ant-) or an OpenRouter key (it starts with sk-or-).`** - Type `workshop-login` and paste the
+key from the facilitator.
 
-**`Claude is busy`** - Many pairs ask at the same time. Wait a minute, then type `./sorter claude`
-again.
+**`Claude is busy`, or the name of a model then `is busy`** - Many pairs ask at the same time. Wait a
+minute, then type `./sorter compare` again.
 
-**`Claude refused the request (HTTP 400): …`** - Show the message to the facilitator: often, the
+**`Claude refused the request (HTTP 400): …`, `OpenRouter says this account has no credit left: …`
+or `A spending limit stopped the test: …`** - Show the message to the facilitator: often, the
 spending limit set for the room has been reached.
 
 ---

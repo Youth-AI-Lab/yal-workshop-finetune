@@ -28,8 +28,9 @@ The page of each workshop is its `README.md`.
 You work in a **GitHub Codespace**: a text editor (VS Code) running in your browser, on a
 computer of GitHub. The editor and the terminal are ready. (Workshop 6 installs its own libraries with `./sorter setup`.) You need **one free GitHub account per
 pair**. The facilitator gives each pair an **API key**: a long password that lets your
-Codespace use Anthropic's model. The facilitator caps what the keys can spend, and each key only
-works for a short time.
+Codespace use a model. For every tool of the series, a key that starts with `sk-ant-` goes through
+Anthropic, and one that starts with `sk-or-` through OpenRouter. The facilitator caps what the keys
+can spend, and each key only works for a short time.
 
 The chatbot runs in **Claude Code**, a program that lets a model work in a folder of files. We
 use it because it **shows everything**: what the model reads, searches and does.
@@ -37,11 +38,23 @@ use it because it **shows everything**: what the model reads, searches and does.
 > ℹ️ **Note.** **This is intentional.** Claude Code is not the tool you will use with young
 > people. It is a glass box: the same mechanisms as in a chat tool, but you can see inside.
 
-> 💡 **If you use OpenCode.** OpenCode is another program that runs the same chatbot, with the
-> same commands. Save your key with `workshop-login --engine opencode`. It also accepts an
-> OpenRouter key, to try other models. See the
-> [OpenCode guide](https://github.com/Youth-AI-Lab/yal-opencode-guide), and
-> [Part 2 - What OpenCode does, compared with Claude Code](https://github.com/Youth-AI-Lab/yal-opencode-guide#part-2---what-opencode-does-compared-with-claude-code).
+> 💡 **With an OpenRouter key.** OpenRouter reaches the models of many companies with one key. This
+> route uses no Claude model and you have nothing to choose: paste the key in step 3. The chatbot
+> then runs in **OpenCode**, another program with the same commands. `deepseek/deepseek-v4-flash`
+> writes the answers and scores them, and workshop 6 compares with
+> `mistralai/mistral-small-3.2-24b-instruct`. To try another model, `workshop-login --models free`
+> lists the free ones, which have a daily quota (see [Troubleshooting](#troubleshooting)), and
+> `workshop-login --model <name>` chooses one. The costs, gauges and scores in these pages were
+> measured with Claude: yours will differ. Compare your totals only with a pair that uses the same
+> model. See the
+> [OpenRouter guide](https://github.com/Youth-AI-Lab/yal-openrouter-guide), and
+> [Part 2 - What OpenCode does, compared with Claude Code](https://github.com/Youth-AI-Lab/yal-opencode-guide#part-2---what-opencode-does-compared-with-claude-code)
+> of the [OpenCode guide](https://github.com/Youth-AI-Lab/yal-opencode-guide). An Anthropic key can
+> use OpenCode too: `workshop-login --engine opencode`.
+
+> ⚠️ **Important.** **With young people**, turn on zero-data-retention models (the company says it
+> stores nothing) hosted in Europe. The settings of these workshops do not do it: the
+> [OpenRouter guide](https://github.com/Youth-AI-Lab/yal-openrouter-guide) says how.
 
 > ℹ️ **No Codespace?** (blocked network, used-up quota) The same repository opens on your own
 > computer, with Docker and VS Code: see the
@@ -95,7 +108,7 @@ then **"Terminal"**, then **"New Terminal"**.
 ### Step 3 - Save the key of your pair
 
 1. **Copy the key** that the facilitator gave you. Copy the **whole** key: one long word that
-   starts with `sk-ant-`.
+   starts with `sk-ant-`, or `sk-or-` for OpenRouter.
 2. **Click in the terminal**, at the bottom of the screen.
 3. **Type** this command, then press **Enter**:
 
@@ -123,6 +136,14 @@ Key received: sk-ant-…a1b2 (… characters). Testing it…
 Key OK (Claude Code, Anthropic, model claude-sonnet-5-5). You can start: workshop bare
 ```
 
+With an OpenRouter key, the second line is:
+
+```
+Key OK (OpenCode, OpenRouter, model openrouter/deepseek/deepseek-v4-flash). You can start: workshop bare
+```
+
+With a free model, one more line follows: `Free requests left today: <number>.`
+
 In workshop 6, the line ends with `workshop-start 6`.
 
 If you see another message, look at [Troubleshooting](#troubleshooting).
@@ -130,6 +151,14 @@ If you see another message, look at [Troubleshooting](#troubleshooting).
 ### Step 4 - Your first conversation
 
 > ℹ️ **Note.** **Workshop 6** has no chatbot: skip steps 4 and 5, and go to step 6.
+
+> ℹ️ **Note.** **With an OpenRouter key**, you arrive in **OpenCode**, not in Claude Code. A second
+> line says `Engine: OpenCode (model openrouter/deepseek/deepseek-v4-flash)`, then you see its logo
+> and a message box. Claude Code's first screens (point 2) do not come. The gauge (point 3) is
+> Claude Code's too: once a conversation has started, OpenCode's side panel has a **context**
+> counter, with the cost (`Ctrl+X` then `B` shows or hides the panel). OpenCode shows what the
+> chatbot did above each answer and, from mode C on, asks before any terminal command. Its `/`
+> commands are not the same: `/mcps`, not `/mcp`.
 
 1. **Type**:
 
@@ -175,9 +204,9 @@ If you see another message, look at [Troubleshooting](#troubleshooting).
 
 5. **Leave** the conversation: press **Ctrl+C twice**. You are back in the terminal.
 
-Commands that start with `/` are typed **inside** a conversation; they work from mode C on (in
-modes bare, A and B they are switched off on purpose, and `/exit` says "Unknown command"). All
-other commands are typed in the terminal, **outside** a conversation.
+Commands that start with `/` are typed **inside** a conversation. In Claude Code, they work from
+mode C on (in modes bare, A and B they are switched off on purpose, and `/exit` says "Unknown
+command"). All other commands are typed in the terminal, **outside** a conversation.
 
 ### Step 5 - Open a second terminal
 
@@ -208,6 +237,7 @@ If you got `Key OK`, a first conversation and `Ready for workshop …`, **everyt
 | Command | Where to type it | What it does |
 |---|---|---|
 | `workshop-login` | terminal | saves the key of your pair and tests it |
+| `workshop-login --models free` | terminal | with an OpenRouter key, lists the free models; `workshop-login --model <name>` chooses one |
 | `workshop-start <n>` | terminal | gets the Codespace ready for workshop n, and opens its page |
 | `workshop <mode>` | terminal | starts a conversation with the chatbot in one **mode**: `bare`, `A`, `B`, `C`, `D`, `E` or `F` |
 | `replay <mode>` | terminal | asks all your test questions in this mode, one new conversation per question, and writes the answers in `answers/` |
@@ -221,7 +251,7 @@ If you got `Key OK`, a first conversation and `Ready for workshop …`, **everyt
 | `Ctrl+Shift+V` | in an open `.md` file | shows it as a readable page: titles, tables, lists (`Cmd+Shift+V` on a Mac) |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | terminal | copy / paste in the terminal, also inside a conversation (`Cmd+C` / `Cmd+V` on a Mac) |
 | `Ctrl+C` twice | in a conversation | leaves the conversation (all modes) |
-| `Ctrl+O` | in a conversation | unfolds the steps of an answer: files read, searches, tools (from workshop 3); `Ctrl+O` again to come back |
+| `Ctrl+O` | in a conversation | in Claude Code, unfolds the steps of an answer: files read, searches, tools (from workshop 3); `Ctrl+O` again to come back |
 
 The commands of the later workshops (`corpus-add`, `wiki-start`, `wiki-graph`, `wiki-explore`,
 `chatbot-export`, `/context`, `/mcp`) are explained in their pages. The **mode** letters are not
@@ -245,11 +275,11 @@ Each word is explained again the first time a workshop uses it.
 | Word | What it means here |
 |---|---|
 | **Kit** | The repository with everything the first five workshops use, in one place: [yal-workshop-kit](https://github.com/Youth-AI-Lab/yal-workshop-kit). Each workshop has its own repository, with only what it needs. |
-| **Model** | A program whose behaviour comes from numbers found by training. In workshops 1 to 5, Claude Sonnet writes the answers, the same for every pair. In workshop 6, a small model chooses a class. |
-| **Context** (or **context window**) | Everything the model reads before it answers. It has a maximum size: here, 200,000 tokens. |
+| **Model** | A program whose behaviour comes from numbers found by training. In workshops 1 to 5, Claude Sonnet writes the answers with an Anthropic key, and `deepseek/deepseek-v4-flash` with an OpenRouter key: the same for every pair with that kind of key. In workshop 6, a small model chooses a class. |
+| **Context** (or **context window**) | Everything the model reads before it answers. It has a maximum size: here, 200,000 tokens at most. |
 | **Token** | The unit used to measure text for a model: a piece of a word. On average, 4 characters of English text. [What a token really is](https://github.com/Youth-AI-Lab/yal-local-ai-guide/blob/main/how-an-llm-works.md#what-a-token-really-is). |
 | **System prompt** | Instructions the model reads at the start of every conversation: who it is, its rules. |
-| **Judge** | Another model, smaller, that scores an answer with the same rules as you. It can be wrong too. |
+| **Judge** | A model that scores an answer with the same rules as you: a smaller one with an Anthropic key, `deepseek/deepseek-v4-flash` with an OpenRouter key. It can be wrong too. |
 | **Corpus** | The collection of official documents the chatbot can use. |
 | **Summary** | A short text in English about one document, written by the model, then checked against the document (by a person for those marked human-reviewed). |
 | **RAG** | *Retrieval-Augmented Generation*: a search engine picks pieces of documents, and only these pieces go to the model. |
@@ -274,27 +304,54 @@ The text you pasted is not a whole key. Copy it again, with nothing before or af
 `workshop-login` again.
 
 **`This is an OpenRouter key: Claude Code in the workshop needs an Anthropic key (sk-ant-…).`** -
-The workshop uses an Anthropic key (it starts with `sk-ant-`): ask the facilitator for the key of
-your pair. An OpenRouter key (`sk-or-`) works only with the other engine, OpenCode:
-`workshop-login --engine opencode`.
+You asked for Claude Code, with `--engine claude` or `WORKSHOP_ENGINE=claude`. Nothing was saved. An
+OpenRouter key runs in OpenCode: the next line of the message says what to type.
 
-**`The saved key is an OpenRouter key: it works with OpenCode only (workshop-login --engine opencode).`** -
-Your key is saved, but `workshop` was started with Claude Code, which needs an Anthropic key
-(it starts with `sk-ant-`). Either go back to OpenCode with `workshop-login --engine opencode`,
-or type `workshop-login` and paste an Anthropic key.
+**`The saved key is an OpenRouter key: it works with OpenCode only. Type this command without WORKSHOP_ENGINE=claude.`** -
+Your key is saved, but this command asked for Claude Code, which needs an Anthropic key (it starts
+with `sk-ant-`). Do as the message says, or type `workshop-login` and paste an Anthropic key.
 
-**`Key saved, but Anthropic refuses it (HTTP 401). Check it with the facilitator.`** - The key
-was saved, but it does not work. Tell the facilitator.
+**`Key saved, but Anthropic refuses it (HTTP 401). Check it with the facilitator.`** (or
+`OpenRouter`) - The key was saved, but it does not work. Tell the facilitator.
 
-**`Key saved, but Anthropic could not be reached (network?). Try: workshop bare`** - The network
-did not answer during the test. Your key is saved: try `workshop bare` (in workshop 6, the
-message says `workshop-start 6`). If it fails, ask the facilitator.
+**`Key saved, but Anthropic could not be reached (network?). Try: workshop bare`** (or `OpenRouter`,
+or `the model <model>`) - The network did not answer during the test. Your key is saved: try
+`workshop bare` (in workshop 6, the message says `workshop-start 6`). If it fails, ask the
+facilitator.
 
-**`Anthropic refuses this key (HTTP 401). Your earlier key is kept.`** - The new key was not
-saved: the chatbot still uses your earlier key. Check the new one with the facilitator.
+**`Anthropic refuses this key (HTTP 401). Your earlier key is kept.`** (or `OpenRouter`) - The new
+key was not saved: the chatbot still uses your earlier key. Check the new one with the facilitator.
+The same goes for `… could not be reached (network?). Your earlier key is kept.` and
+`The test answered HTTP <code> (model <model>). Your earlier key is kept.`
 
 **`Key saved, but the test answered HTTP <code> (model <model>). Tell the facilitator.`** - Show
 the message to the facilitator.
+
+**`Key saved, but this OpenRouter account has no credits left. Add credits, or choose a free model: workshop-login --models free`** -
+HTTP 402: tell the facilitator. In `replay`, the line says `no credits left on this key`. A key that
+reached its limit may give this message too (not tested). With a negative balance, free models are
+blocked as well.
+
+**`Key saved, but this key has reached its spending limit. Tell the facilitator.`** - In `replay`,
+the line says `this key or its account reached a spending limit`.
+
+**`Key saved, but the quota of the model <model> is reached for now (HTTP 429). Try again later, or choose another model: workshop-login --models openrouter`**,
+or **`Key saved, but the model <model> is busy (HTTP <code>). Try again in a few minutes, or choose another model: workshop-login --models openrouter`** -
+Do as the message says. In `replay`, the line says
+`too many requests, or the quota of this key or of this model is used up`, after a wait: OpenCode
+tries again by itself first. Free models have a quota: on 2026-11-01, 50 requests a day (1,000 once
+the account has bought at least $10 of credits), failed requests included. In our one test, with
+two free models at the same time, `replay` stopped on this error: after modes bare and A for one,
+from the start for the other. One free model alone, with quota left: (not tested).
+
+**`Key saved, but no company can serve the model <model> while promising not to keep the questions. Choose another model: workshop-login --models openrouter`** -
+With an OpenRouter key, each request asks to leave out companies that may collect the data or train
+on it. Some of the companies left may still keep the questions for a time. None of them serves this
+model now. In `replay`, the line says
+`the model is busy, or no company can serve it now`: try again later, or ask the facilitator.
+
+**`OpenRouter has no model <model> that can use tools.`** - Nothing was saved. The name is wrong, or
+this model cannot use tools, which the workshops need. The next lines show close names.
 
 **`No API key yet. Type: workshop-login`** - You have not saved your key yet. Do
 [Setup, step 3](#step-3---save-the-key-of-your-pair).
@@ -306,8 +363,8 @@ the message to the facilitator.
 its own repository. Here, use a mode of the list shown when the chatbot starts. `workshop` alone
 means mode D: type the mode, for example `workshop A`.
 
-**"I cannot leave the conversation!"** - Don't panic. Press `Ctrl+C` twice. (`/exit` works only
-from mode C on; in modes bare, A and B it says "Unknown command".)
+**"I cannot leave the conversation!"** - Don't panic. Press `Ctrl+C` twice. (In Claude Code, `/exit`
+works only from mode C on; in modes bare, A and B it says "Unknown command".)
 
 **I see `*` instead of my key.** - This is normal: the key is hidden, like a password. You see
 one `*` per character. Paste it once, then press Enter.
@@ -323,7 +380,8 @@ key, then ask the facilitator.
 
 **`replay` takes a long time.** - Each question is a new conversation. You can go on working in
 your other terminal. If time is short, the facilitator may ask you to replay only some
-questions, for example `replay A 7 9`.
+questions, for example `replay A 7 9`. With `deepseek/deepseek-v4-flash`, 11 questions took 3 to
+4.5 minutes per `replay` in modes bare, C, D and E (one test).
 
 **`Docker is not available here, and Open WebUI needs it.`** - In a Codespace, Docker starts a
 few seconds after the Codespace: wait one minute and type `openwebui start` again. On your own

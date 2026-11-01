@@ -44,8 +44,10 @@ columns: chosen class). **Emergencies missed**, an emergency sorted as something
 
 ## 5. The big model, without training (15 min)
 
-1. `./sorter claude` (needs an Anthropic key, not `./sorter setup`): Claude sorts the same test from a
-   description of the classes, no examples. Each test message goes to Anthropic.
+1. `./sorter compare` (needs a key, not `./sorter setup`): a big model sorts the same test from a
+   description of the classes, no examples: Claude Haiku with an Anthropic key, Mistral Small with an
+   OpenRouter key. Each test message goes to Anthropic, or through OpenRouter to a company that runs
+   the model.
 2. Fill in the table, with your first score and its emergencies missed.
 
 ## 6. Closing (15 min)
