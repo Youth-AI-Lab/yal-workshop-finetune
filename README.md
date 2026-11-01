@@ -823,13 +823,11 @@ can miss what its examples leave out. In both cases, only the test tells you.
 > Your small model sorts inside the Codespace. But in a real chatbot, `topic`, `today`, unsure and long
 > messages then reach the big model, so for messages that young people write, look at both models.
 
-> ⚠️ **Important.** **With young people and an OpenRouter key**, zero-data-retention models hosted in
-> Europe must be on. Zero data retention: the company says it stores nothing, and OpenRouter does not
-> guarantee it. Turn on the switches in your [privacy settings](https://openrouter.ai/settings/privacy)
-> and choose **Zero retention only** (not tested). Europe is not a switch: it needs a Business or
-> Enterprise plan, and the workshop commands cannot do it yet. No setting lifts OpenRouter's rule: "You
-> must be at least 18 years of age to use the Service." Read
-> [OpenRouter guide, Part 8](https://github.com/Youth-AI-Lab/yal-openrouter-guide#part-8---data-and-young-people)
+> ⚠️ **Important.** **With young people and an OpenRouter key**, type `workshop-login --europe`.
+> Requests then go only to zero-data-retention companies (they say they store nothing) hosted in
+> Europe, with Mistral Small by default. OpenRouter itself may still handle them elsewhere. The
+> setting does not lift OpenRouter's 18+ rule or section 5.2 of its terms, and flagged content may
+> be kept. Read [OpenRouter guide, Part 8](https://github.com/Youth-AI-Lab/yal-openrouter-guide#part-8---data-and-young-people)
 > before any session with young people.
 
 > 💡 **Tip.** **Checkpoint**: the table is full, and you can say in one sentence when you would choose

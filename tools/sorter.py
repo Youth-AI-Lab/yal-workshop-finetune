@@ -424,6 +424,7 @@ off-topic: anything else"""
 # A short copy of workshop_provider.py, from the workshop image: this file is not in the image, and it uses the
 # standard library only. Same names, same routing, and a test compares the two.
 KEY_FILE = Path.home() / ".workshop-key"
+SETTINGS_FILE = Path.home() / ".workshop-opencode.json"  # written by workshop-login
 Provider = namedtuple("Provider", "name label prefix api small")
 ANTHROPIC = Provider("anthropic", "Anthropic", "sk-ant-", "https://api.anthropic.com/v1",
                      os.environ.get("WORKSHOP_SORTER_CLAUDE", "claude-haiku-5-5"))
@@ -432,9 +433,14 @@ OPENROUTER = Provider("openrouter", "OpenRouter", "sk-or-", "https://openrouter.
                       "mistralai/mistral-small-3.2-24b-instruct")
 PROVIDERS = (ANTHROPIC, OPENROUTER)
 
-# OpenRouter sends a question to any company that serves the model unless told otherwise: never to one
-# that may keep it or train on it. A request that no company can serve then fails with 404 or 503.
+# OpenRouter sends a question to any company that serves the model unless told otherwise. This rule leaves
+# out the companies that may collect the data or train on it; some of the others may still keep questions
+# for a time. A request that no company can serve then fails with 404 or 503.
 ROUTING = {"data_collection": "deny"}
+
+# workshop-login --europe: the endpoints in Europe with zero data retention and no safety retention.
+# This chooses where the model runs, not where OpenRouter handles the request.
+EUROPE_ENDPOINTS = ["mistral/eu", "amazon-bedrock/eu-west-1", "azure/eu", "azure/swedencentral", "google-vertex/europe"]
 
 # text: the answer. tokens_in, tokens_out: as billed. cost: what the provider says the call cost, or None.
 # stop: end, length, refusal or error. kind: None when the call worked, otherwise one of
@@ -459,6 +465,26 @@ def read_key():
         return KEY_FILE.read_text(encoding="utf-8").strip()
     except OSError:
         return ""
+
+
+def saved_settings():
+    try:
+        saved = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
+        return saved if isinstance(saved, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def europe():
+    """True after workshop-login --europe."""
+    return saved_settings().get("europe") is True
+
+
+def routing():
+    """What every OpenRouter request sends in "provider"."""
+    if europe():
+        return dict(ROUTING, zdr=True, only=EUROPE_ENDPOINTS, allow_fallbacks=False)
+    return ROUTING
 
 
 def _kind(status, message):
@@ -510,7 +536,7 @@ def _request_anthropic(provider, key, system, user, model, max_tokens, effort):
 
 def _request_openrouter(provider, key, system, user, model, max_tokens, effort):
     # max_tokens is deprecated there, and some companies refuse less than 16.
-    body = {"model": model, "max_completion_tokens": max(max_tokens, 16), "provider": ROUTING,
+    body = {"model": model, "max_completion_tokens": max(max_tokens, 16), "provider": routing(),
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
     if effort:
         body["reasoning"] = {"effort": effort}
@@ -626,8 +652,8 @@ def stop_sentence(provider, model, reply):
     if reply.kind == "limit":
         return f"A spending limit stopped the test: {detail}. Show this message to the facilitator."
     if reply.kind == "model":
-        return (f"No company can run {model} for this test: {detail}. The workshop only allows companies that do not "
-                "keep the messages. This does not mean busy, so waiting will not help: choose another model with "
+        return (f"No company can run {model} for this test: {detail}. The workshop leaves out companies that may "
+                "collect the data or train on it. This does not mean busy, so waiting will not help: choose another model with "
                 "WORKSHOP_SORTER_MODEL, or show this message to the facilitator.")
     if reply.kind == "busy":
         return f"{model} is busy{code}: {detail}. Wait a minute and type ./sorter compare again."

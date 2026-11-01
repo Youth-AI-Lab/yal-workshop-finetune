@@ -52,9 +52,13 @@ use it because it **shows everything**: what the model reads, searches and does.
 > of the [OpenCode guide](https://github.com/Youth-AI-Lab/yal-opencode-guide). An Anthropic key can
 > use OpenCode too: `workshop-login --engine opencode`.
 
-> ⚠️ **Important.** **With young people**, turn on zero-data-retention models (the company says it
-> stores nothing) hosted in Europe. The settings of these workshops do not do it: the
-> [OpenRouter guide](https://github.com/Youth-AI-Lab/yal-openrouter-guide) says how.
+> ⚠️ **Important.** **With young people**, type `workshop-login --europe`. Requests then go only to
+> zero-data-retention companies (they say they store nothing) hosted in Europe, with Mistral Small
+> by default. OpenRouter itself may still handle them elsewhere, and accounts and billing may stay
+> in the US: keeping the handling in Europe needs a Business plan, which these commands do not
+> support. The setting does not lift OpenRouter's 18+ rule or section 5.2 of its terms, and flagged
+> content may be kept. A chatbot already open keeps its old rule: close it and start it again. See
+> [OpenRouter guide, Part 8](https://github.com/Youth-AI-Lab/yal-openrouter-guide#part-8---data-and-young-people).
 
 > ℹ️ **No Codespace?** (blocked network, used-up quota) The same repository opens on your own
 > computer, with Docker and VS Code: see the
@@ -344,11 +348,31 @@ the account has bought at least $10 of credits), failed requests included. In ou
 two free models at the same time, `replay` stopped on this error: after modes bare and A for one,
 from the start for the other. One free model alone, with quota left: (not tested).
 
-**`Key saved, but no company can serve the model <model> while promising not to keep the questions. Choose another model: workshop-login --models openrouter`** -
+**`Key saved, but no company can serve the model <model> under the workshop's data rule. Choose another model: workshop-login --models openrouter`** -
 With an OpenRouter key, each request asks to leave out companies that may collect the data or train
 on it. Some of the companies left may still keep the questions for a time. None of them serves this
 model now. In `replay`, the line says
 `the model is busy, or no company can serve it now`: try again later, or ask the facilitator.
+
+**`Key saved, but no company hosted in Europe serves the model <model> with zero data retention. Choose another model, for example: workshop-login --model <name>`** -
+You turned on `workshop-login --europe`, and this model has no such company. Type the command the
+message gives you.
+
+**`Mode B sends the whole kit at once, and this model reads <number> tokens at most.`** -
+The model's window is smaller than the kit. This is the case with `workshop-login --europe`, where
+the default window is 32k. Choose a model with a larger window, or skip mode B.
+
+**`OpenCode is already open and keeps the old data rule: close it and start it again. A replay stops by itself before its next question.`** -
+You changed `--europe` while OpenCode was running. What you type there still goes out under the old
+rule. Close that chatbot, then start it again with `workshop`.
+
+**`Your data rule changed during this replay (workshop-login --europe or --no-europe). The next question was not sent.`** -
+The question in progress finished under the old rule. Its answer stays in `answers/`. Type the same
+`replay` command again. With `replay RAG`, type `openwebui start` first.
+
+**`Open WebUI keeps the old data rule until you type: openwebui start`**, or
+**`Your data rule changed since Open WebUI started (workshop-login --europe). Type openwebui start (it takes the new rule), then this command again.`** - Open WebUI reads the rule when it starts.
+Until `openwebui start`, its chatbots still answer under the old rule.
 
 **`OpenRouter has no model <model> that can use tools.`** - Nothing was saved. The name is wrong, or
 this model cannot use tools, which the workshops need. The next lines show close names.
