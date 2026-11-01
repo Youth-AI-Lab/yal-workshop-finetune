@@ -54,7 +54,7 @@ use it because it **shows everything**: what the model reads, searches and does.
 
 > ⚠️ **Important.** **With young people**, type `workshop-login --europe`. Requests then go only to
 > Mistral, hosted in Europe, with zero data retention (it says it stores nothing).
-> The default model is Mistral Small. OpenRouter itself may still handle them elsewhere, and accounts and billing may stay
+> The default model is `mistralai/mistral-small-2603`. OpenRouter itself may still handle them elsewhere, and accounts and billing may stay
 > in the US: keeping the handling in Europe needs a Business plan, which these commands do not
 > support. The setting does not lift OpenRouter's 18+ rule or section 5.2 of its terms, and flagged
 > content may be kept. A chatbot already open keeps its old rule: close it and start it again. See
@@ -334,7 +334,8 @@ the message to the facilitator.
 **`Key saved, but this OpenRouter account has no credits left. Add credits, or choose a free model: workshop-login --models free`** -
 HTTP 402: tell the facilitator. In `replay`, the line says `no credits left on this key`. A key that
 reached its limit may give this message too (not tested). With a negative balance, free models are
-blocked as well.
+blocked as well. After `workshop-login --europe`, the message stops at `Add credits.`: no free model
+runs in Europe.
 
 **`Key saved, but this key has reached its spending limit. Tell the facilitator.`** - In `replay`,
 the line says `this key or its account reached a spending limit`.
@@ -347,7 +348,9 @@ tries again by itself first. Free models have a quota: on 2026-11-01, 50 request
 the account has bought at least $10 of credits), failed requests included. In our one test, with
 two free models at the same time, `replay` stopped on this error: after modes bare and A for one,
 from the start for the other. One at a time, with quota left: `cohere/north-mini-code:free` finished
-`replay C`, and `google/gemma-4-26b-a4b-it:free` stopped on three 429s within 10 s.
+`replay C`, and `google/gemma-4-26b-a4b-it:free` stopped on three 429s within 10 s. After
+`workshop-login --europe`, the message names one Mistral model instead of the list: it works under
+the same rule.
 
 **`Key saved, but no company can serve the model <model> under the workshop's data rule. Choose another model: workshop-login --models openrouter`** -
 With an OpenRouter key, each request asks to leave out companies that may collect the data or train
@@ -359,9 +362,11 @@ model now. In `replay`, the line says
 You turned on `workshop-login --europe`, and this model has no such company. Type the command the
 message gives you.
 
-**`Mode B sends the whole kit at once, and this model reads <number> tokens at most.`** -
-The model's window is smaller than the kit. This is the case with `workshop-login --europe`, where
-the default window is 32k. Skip mode B and go on with the next part of today's page.
+**`Mode B sends the whole kit at once, and this model reads <number> tokens at most.`**, or
+**`Mode B does not run with this model.`** -
+This model cannot read the whole kit at once: its window (how much it can read at once) is too
+small. This can happen with a model you chose with `--model`. Type the command the message gives
+you, then press Enter alone to keep your key.
 
 **`OpenCode is already open and keeps the old data rule: close it and start it again. A replay stops by itself before its next question.`** -
 You changed `--europe` while OpenCode was running. What you type there still goes out under the old

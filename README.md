@@ -825,7 +825,8 @@ can miss what its examples leave out. In both cases, only the test tells you.
 
 > ⚠️ **Important.** **With young people and an OpenRouter key**, type `workshop-login --europe`.
 > Requests then go only to Mistral, hosted in Europe, with zero data retention (it says it stores nothing).
-> The default model is Mistral Small. OpenRouter itself may still handle them elsewhere. The
+> `./sorter compare` stays on `mistralai/mistral-small-3.2-24b-instruct`, even if the line `Key OK`
+> names another model. OpenRouter itself may still handle them elsewhere. The
 > setting does not lift OpenRouter's 18+ rule or section 5.2 of its terms, and flagged content may
 > be kept. Read [OpenRouter guide, Part 8](https://github.com/Youth-AI-Lab/yal-openrouter-guide#part-8---data-and-young-people)
 > before any session with young people.
