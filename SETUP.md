@@ -247,7 +247,7 @@ Each word is explained again the first time a workshop uses it.
 | **Kit** | The repository with everything the first five workshops use, in one place: [yal-workshop-kit](https://github.com/Youth-AI-Lab/yal-workshop-kit). Each workshop has its own repository, with only what it needs. |
 | **Model** | A program whose behaviour comes from numbers found by training. In workshops 1 to 5, Claude Sonnet writes the answers, the same for every pair. In workshop 6, a small model chooses a class. |
 | **Context** (or **context window**) | Everything the model reads before it answers. It has a maximum size: here, 200,000 tokens. |
-| **Token** | The unit used to measure text for a model: a piece of a word. On average, 4 characters of English text. |
+| **Token** | The unit used to measure text for a model: a piece of a word. On average, 4 characters of English text. [What a token really is](https://github.com/Youth-AI-Lab/yal-local-ai-guide/blob/main/how-an-llm-works.md#what-a-token-really-is). |
 | **System prompt** | Instructions the model reads at the start of every conversation: who it is, its rules. |
 | **Judge** | Another model, smaller, that scores an answer with the same rules as you. It can be wrong too. |
 | **Corpus** | The collection of official documents the chatbot can use. |

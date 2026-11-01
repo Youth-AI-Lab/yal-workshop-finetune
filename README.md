@@ -378,7 +378,7 @@ weekend?").
 One rule for both files: **every message is invented, with nothing about a real person**. In Part 5,
 `./sorter claude` sends each test message to Anthropic.
 
-> ℹ️ **Note.** **Keep each message to 15 words at most.** The model gives an address to each token (a
+> ℹ️ **Note.** **Keep each message to 15 words at most.** The model gives an address to each [token](https://github.com/Youth-AI-Lab/yal-local-ai-guide/blob/main/how-an-llm-works.md#what-a-token-really-is) (a
 > word or a part of a word), then takes the average, so one urgent sentence is drowned in a long
 > message. This happens well before the limit of 128 tokens (about 100 words in English), where the
 > model stops reading. `./sorter train` warns you about a longer example, and `./sorter test` lists a
