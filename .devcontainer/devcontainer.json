@@ -5,7 +5,7 @@
   // réduit à ce téléchargement, identique pour tous les binômes.
   // Tag épinglé, jamais `latest`. Pour en changer : facilitator/SETUP.md (dépôt animateur),
   // en publiant l'image AVANT de modifier cette ligne.
-  "image": "ghcr.io/youth-ai-lab/yal-workshop-devcontainer:2026.10.40",
+  "image": "ghcr.io/youth-ai-lab/yal-workshop-devcontainer:2026.10.41",
   "remoteUser": "vscode",
   "remoteEnv": {
     "WORKSHOP_HOME": "${containerWorkspaceFolder}"
