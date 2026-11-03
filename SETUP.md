@@ -56,7 +56,7 @@ use it because it **shows everything**: what the model reads, searches and does.
 > Mistral, hosted in Europe, with zero data retention (it says it stores nothing).
 > The default model is `mistralai/mistral-small-2603`. OpenRouter itself may still handle them elsewhere, and accounts and billing may stay
 > in the US: keeping the handling in Europe needs a Business plan, which these commands do not
-> support. The setting does not lift OpenRouter's 18+ rule or section 5.2 of its terms, and flagged
+> support. The setting does not lift OpenRouter's 18+ rule (its support chat reads it as: no young person creates or uses their own key; this is not in its terms, so keep every key with the adults) or section 5.2 of its terms, and flagged
 > content may be kept. A chatbot already open keeps its old rule: close it and start it again. See
 > [OpenRouter guide, Part 8](https://github.com/Youth-AI-Lab/yal-openrouter-guide#part-8---data-and-young-people).
 
