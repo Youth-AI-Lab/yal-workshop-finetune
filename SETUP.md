@@ -294,7 +294,7 @@ If you got `Key OK`, a first conversation and `Ready for workshop …`, **everyt
 | `score <mode>` | terminal | the judge proposes a score, you accept it (Enter) or correct it |
 | `workshop-save` | terminal | packs your work into `my-work.zip`, to download at the end of each workshop |
 | `workshop help` | terminal | what each mode puts in the context |
-| `openwebui start` | terminal | starts Open WebUI in your Codespace; `openwebui chatbot --name "…"` adds your own chatbot; `openwebui help` for more |
+| `openwebui start` | terminal | starts Open WebUI in your Codespace; `openwebui chatbot --name "…"` adds your own chatbot (`--rag`: the same chatbot as a RAG); `openwebui help` for more |
 | `Ctrl+Shift+V` | in an open `.md` file | shows it as a readable page: titles, tables, lists (`Cmd+Shift+V` on a Mac) |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | terminal | copy / paste in the terminal, also inside a conversation (`Cmd+C` / `Cmd+V` on a Mac) |
 | `Ctrl+C` twice | in a conversation | leaves the conversation (all modes) |
@@ -330,7 +330,7 @@ Each word is explained again the first time a workshop uses it.
 | **Corpus** | The collection of official documents the chatbot can use. |
 | **Summary** | A short text in English about one document, written by the model, then checked against the document (by a person for those marked human-reviewed). |
 | **RAG** | *Retrieval-Augmented Generation*: a search engine picks pieces of documents, and only these pieces go to the model. |
-| **Skill** | A procedure written in plain English (a file `SKILL.md`): the model opens it only when your request matches its description, then follows its steps. |
+| **Skill** | A procedure written in plain English (a file `SKILL.md`): in Claude Code and OpenCode, the model opens it only when your request matches its description, then follows its steps. In your chatbot in Open WebUI, its whole text goes with every message. |
 | **MCP** | *Model Context Protocol*: a standard way to give a tool to a model (here, a tool that reads live data). |
 | **Wiki** | Pages organised by topic, linked together, each fact with a note that gives its source. |
 
@@ -466,6 +466,14 @@ stops with the Codespace. Type `openwebui start` again: your knowledge and your 
 
 **`Your key changed since Open WebUI started.`** - You saved a new key with `workshop-login`.
 Type `openwebui start`: Open WebUI starts again with the new key.
+
+**`Open WebUI was started by an older version of this command. Type openwebui start (your chatbots and documents are kept), then this command again.`** -
+Your Codespace has a newer version of the workshop commands. `openwebui start` makes Open WebUI again
+with the new settings. Your chatbots, documents and conversations stay. Then type your command again.
+
+**`Open WebUI was started without the live tool of this workshop (mcp/). Type openwebui start (your chatbots and documents are kept), then this command again.`** -
+From workshop 4, Open WebUI starts with the live tool of `mcp/`. This one was started before the
+tool was there. Type `openwebui start`, then your command again: your chatbots and documents stay.
 
 **The Codespace stopped.** - It stops after a long pause. Reopen it from
 https://github.com/codespaces: nothing is lost. To avoid it with your next Codespaces, see

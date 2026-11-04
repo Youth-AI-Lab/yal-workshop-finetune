@@ -992,6 +992,11 @@ tool and reads the result. Both reach the big model.
 > would happen, nothing more: no safety answer exists, and no chatbot is connected. A real service
 > needs a separately tested emergency path, and a person who takes over.
 
+> ℹ️ **Note.** **The facilitator shows a prototype.** On the big screen, the facilitator puts their own sorter
+> in front of a chatbot in Open WebUI. You see each class above the answer, and the messages that get a fixed
+> answer never reach the big model. It stays a prototype to think with, not a tool for a real service: see
+> [Why think about routing](#why-think-about-routing) for the three reasons, well-being, private data and energy.
+
 A sorter makes mistakes, so **all three fixed answers would name the emergency number and an adult
 they trust**, and the kind answer also a support contact of your place. That is not a safety net: a
 missed cry for help gets a refusal with a number, or kind words when someone is in danger now, and a
