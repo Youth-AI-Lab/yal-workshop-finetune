@@ -102,9 +102,14 @@ well-being*.
 **Private data.** A message that never reaches the big model never reaches the company that runs it.
 The messages that need protecting most, the worrying ones, are the ones a sorter can keep away from it.
 
-**Energy.** A big model answers each message on graphics cards in a data centre. Today's sorter answers
-in a few milliseconds on the two processors of your Codespace. Sending the big model only the messages
-it is good at means less work in the data centre. We did not measure the energy of either. It links
+**Energy.** Data centres used about 485 terawatt-hours (TWh) of electricity in 2025. The International
+Energy Agency expects about 950 TWh in 2030, around 3% of the electricity of the world. The energy of
+each AI task falls fast, but the total still grows
+([IEA, *Key Questions on Energy and AI*, 2026](https://www.iea.org/reports/key-questions-on-energy-and-ai/executive-summary)).
+A big model answers each message on graphics cards in a data centre. Your Codespace runs in a data
+centre too, but today's sorter answers in a few milliseconds on its two processors. Sending the big
+model only the messages it is good at means less work for it. We did not measure the energy of either
+model. It links
 with the Goals 12, *Responsible consumption and production*, and 13, *Climate action*: the same
 questions as in the SDG Bingo of WikiYouthBot, applied to the chatbot itself.
 
