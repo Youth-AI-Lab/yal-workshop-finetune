@@ -1,6 +1,6 @@
 # Workshop 6 - Teach a small model to sort messages
 
-### Youth AI Lab (Erasmus+) - series "Build your own chatbot", workshop 6 of 6
+### Youth AI Lab (Erasmus+) - series "Build your own chatbot", workshop 6: going further
 
 - **Project:** Youth AI Lab (Erasmus+), with five partners: L.A.B. (Aix-en-Provence, France),
   UAB (Barcelona, Spain), Perlatecnica (Naples, Italy), Digitale Wolven (Antwerp, Belgium),
@@ -45,7 +45,7 @@ itself never changed. It stayed the same model for everyone, with the same numbe
 you change a model. A small one, for one narrow task: **sorting the messages** that people send to a
 chatbot, before the chatbot sees them. The question of the day is:
 
-> **When is it worth teaching a small model, instead of asking a big one?**
+> **How can a small model that you teach help a big one?**
 
 | Bloom level | Parts | You will be able to... |
 |---|---|---|
@@ -60,7 +60,10 @@ chatbot, before the chatbot sees them. The question of the day is:
 one task. In workshop 5, it was only an option on a slide of the facilitator: the knowledge goes into
 the model, with no source, and a mistake means training again. A fine-tuned model that writes can also
 still invent, and fine-tuning a big one takes far more than a youth organisation has: graphics cards,
-thousands of examples, days of work.
+thousands of examples, days of work. The biggest models cannot be fine-tuned by their users at all.
+Some companies sell fine-tuning of some of their models, and an open model can be adapted on a
+rented graphics card. It is still useful sometimes, for a style or a fixed format, but it is a
+project in itself.
 
 A **classifier** is a different kind of model. It does not write anything. It **chooses** one class
 among a few that you decide, so it cannot invent an answer. A small classifier learns from a few
@@ -77,8 +80,33 @@ deserve the same treatment:
 | `urgent` | a fire happening now, or a person in danger or distress, with no fire needed | "There is smoke coming from the woods behind my house!" | a fixed safety answer, at once |
 | `off-topic` | anything else | "Can you help me with my maths homework?" | a polite refusal that still says who can help (the emergency number, an adult they trust), without spending tokens |
 
+> ⚠️ **Important.** **People tell chatbots about themselves.** A chatbot about wildfires also
+> receives messages about fear, sadness, or a problem at home. It happens often, with any chatbot,
+> and you can plan for it: before a session, decide who reads a worrying message, and what the
+> chatbot says. Today's sorter helps you think about it. It is not a safety net.
+
 A sorter placed **before** a chatbot could do this in under a second, at no cost per message, and
-sorting sends the message nowhere.
+sorting sends the message nowhere. The big model then gets only the messages it is good at.
+
+### Why think about routing
+
+Today's sorter is a prototype, not a tool for a real service. Its purpose is to make you think, before
+you open a chatbot to young people, about what each message should reach. Three reasons make it worth
+the thought.
+
+**Well-being.** A message about fear, danger or a problem at home needs a person and a number, not a
+long answer written by a model. Deciding in advance where such a message goes is part of looking after
+the young people who write it. It links with the Sustainable Development Goal 3, *Good health and
+well-being*.
+
+**Private data.** A message that never reaches the big model never reaches the company that runs it.
+The messages that need protecting most, the worrying ones, are the ones a sorter can keep away from it.
+
+**Energy.** A big model answers each message on graphics cards in a data centre. Today's sorter answers
+in a few milliseconds on the two processors of your Codespace. Sending the big model only the messages
+it is good at means less work in the data centre. We did not measure the energy of either. It links
+with the Goals 12, *Responsible consumption and production*, and 13, *Climate action*: the same
+questions as in the SDG Bingo of WikiYouthBot, applied to the chatbot itself.
 
 The question of the series was: **what enters the model's context, when, and who decides?** Today's
 answer: a small model can decide whether a message reaches the big model at all, and you decide, with

@@ -1,6 +1,6 @@
 # Workshop 6 - Teach a small model to sort messages (one page)
 
-**Question of the day: when is it worth teaching a small model, instead of asking a big one?**
+**Question of the day: how can a small model that you teach help a big one?**
 Full page: [README.md](README.md). Setup and common problems: [SETUP.md](SETUP.md) (steps 1 to 3 and 6 today).
 
 | Class | What it means | What a real chatbot would do |
