@@ -7,7 +7,8 @@ Full page: [README.md](README.md). Setup and common problems: [SETUP.md](SETUP.m
 |---|---|---|
 | `topic` | a question about the chatbot's topic | answer, with its instructions and knowledge |
 | `today` | a question that needs the facts of the moment, tonight or this weekend included | call the live tool (workshop 4), read the result |
-| `urgent` | a fire happening now, or a person in danger or distress, with no fire needed | fixed safety answer at once: 112 (European number), an adult they trust |
+| `urgent` | a fire happening now, or a person in danger now, with or without fire: violence, threats, any risk to someone's life (thoughts of self-harm or suicide included) | fixed safety answer at once: 112 (European number), an adult they trust |
+| `worried` | someone sad, scared, lonely or worried, with no danger right now | fixed kind answer at once: an adult they trust, a support contact of your place, 112 if someone is in danger |
 | `off-topic` | anything else | polite refusal naming 112 and an adult they trust, no tokens spent |
 
 ## 1. Welcome (15 min)
@@ -20,21 +21,22 @@ Full page: [README.md](README.md). Setup and common problems: [SETUP.md](SETUP.m
 ## 2. A model that has not learned your classes yet (15 min)
 
 Open `messages/examples.md` and `messages/test.md`. `./sorter baseline`: read the table (rows: right class,
-columns: chosen class). **Emergencies missed**, an emergency sorted as something else, matters most.
+columns: chosen class). **Emergencies missed**, an emergency sorted as something else, matters most. Then
+**Worried messages missed**: a worried message sorted as `topic`, `today` or `off-topic`.
 
 ## 3. Write your examples, and a test for another pair (25 min)
 
 1. At least **10 messages per class** in `messages/examples.md`, in your language, real-sounding, 15 words
    at most, with hard cases. Examples and test: **invented, nothing about a real person**. Headings unchanged, each message starts with `- `. The file ends under `## off-topic`: check the heading above each line.
-2. On paper or in the chat: **3 messages per class for another pair**, 15 words at most, the class above each group. Swap.
+2. On paper or in the chat: **3 messages per class for another pair** (15 in all), 15 words at most, the class above each group. Swap.
 3. Type theirs into `messages/test.md`, under **the classes they gave you**. **Never** a test message in the examples.
 
 ## 4. Fine-tune, test, improve (30 min)
 
 1. Read "What do you train?" and "How does the training work?" (4 min). Predict.
    `./sorter baseline`: **baseline score**.
-2. `./sorter train` (about 2 min with 80 examples): the facilitator talks. When it ends, type `./sorter test`
-   and keep listening: your **first score**, the one honest test. On the board: both scores, emergencies missed.
+2. `./sorter train` (about 3 min with 100 examples): the facilitator talks. When it ends, type `./sorter test`
+   and keep listening: your **first score**, the one honest test. On the board: both scores, emergencies and worried messages missed.
    The `README.md` of the model folder (`~/.workshop-finetune/model`) quotes some of your examples.
 3. No line under `Mistakes:` or `Right but below 0.5`? Read "What the training changes" as far as the map,
    then go to 4. Otherwise take 2 of these lines at most, emergencies first, add 2 examples like each one,
