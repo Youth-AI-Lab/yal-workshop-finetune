@@ -38,33 +38,76 @@ use it because it **shows everything**: what the model reads, searches and does.
 > ℹ️ **Note.** **This is intentional.** Claude Code is not the tool you will use with young
 > people. It is a glass box: the same mechanisms as in a chat tool, but you can see inside.
 
-> 💡 **With an OpenRouter key.** OpenRouter reaches the models of many companies with one key. This
-> route uses no Claude model and you have nothing to choose: paste the key in step 3. The chatbot
-> then runs in **OpenCode**, another program with the same commands. `deepseek/deepseek-v4-flash`
-> writes the answers and scores them, and workshop 6 compares with
-> `mistralai/mistral-small-3.2-24b-instruct`. To try another model, `workshop-login --models free`
-> lists the free ones, which have a daily quota (see [Troubleshooting](#troubleshooting)), and
-> `workshop-login --model <name>` chooses one. The costs, gauges and scores in these pages were
-> measured with Claude: yours will differ. Compare your totals only with a pair that uses the same
-> model. See the
-> [OpenRouter guide](https://github.com/Youth-AI-Lab/yal-openrouter-guide), and
-> [Part 2 - What OpenCode does, compared with Claude Code](https://github.com/Youth-AI-Lab/yal-opencode-guide#part-2---what-opencode-does-compared-with-claude-code)
-> of the [OpenCode guide](https://github.com/Youth-AI-Lab/yal-opencode-guide). An Anthropic key can
-> use OpenCode too: `workshop-login --engine opencode`.
-
-> ⚠️ **Important.** **With young people**, type `workshop-login --europe`. Requests then go only to
-> Mistral, hosted in Europe, with zero data retention (it says it stores nothing).
-> The default model is `mistralai/mistral-small-2603`. OpenRouter itself may still handle them elsewhere, and accounts and billing may stay
-> in the US: keeping the handling in Europe needs a Business plan, which these commands do not
-> support. The setting does not lift OpenRouter's 18+ rule (its support chat reads it as: no young person creates or uses their own key; this is not in its terms, so keep every key with the adults) or section 5.2 of its terms, and flagged
-> content may be kept. A chatbot already open keeps its old rule: close it and start it again. See
-> [OpenRouter guide, Part 8](https://github.com/Youth-AI-Lab/yal-openrouter-guide#part-8---data-and-young-people).
+> 💡 **With an OpenRouter key** (it starts with `sk-or-`), the chatbot runs in another program,
+> OpenCode. Read [With an OpenRouter key](#with-an-openrouter-key) below.
 
 > ℹ️ **No Codespace?** (blocked network, used-up quota) The same repository opens on your own
 > computer, with Docker and VS Code: see the
 > [dev containers guide](https://github.com/Youth-AI-Lab/yal-devcontainer-guide). For a model that
 > runs on a computer of your organisation: the
 > [local AI guide](https://github.com/Youth-AI-Lab/yal-local-ai-guide).
+
+### With an OpenRouter key
+
+The same for every workshop. The page of each workshop only adds what is new that day.
+
+**What OpenRouter is.** OpenRouter is a service that passes your question to a company that runs the
+model, which may not be Anthropic. It reaches the models of many companies with one key. This route
+uses no Claude model, and you have nothing to choose: paste the key in
+[step 3](#step-3---save-the-key-of-your-pair), in `workshop-login`, with no option.
+
+**What changes.** The key chooses **OpenCode**, another program that runs the same chatbot: the same
+modes, the same `replay`, the same files. `score`, Open WebUI and `replay RAG` use OpenRouter too.
+`deepseek/deepseek-v4-flash` writes the answers and scores them, and workshop 6 compares with
+`mistralai/mistral-small-3.2-24b-instruct`. To try another model, `workshop-login --models free`
+lists the free ones, which have a daily quota (see [Troubleshooting](#troubleshooting)), and
+`workshop-login --model <name>` chooses one. An Anthropic key can use OpenCode too:
+`workshop-login --engine opencode`.
+
+**What you can compare.** The figures of the workshop pages (cost, time, gauge, scores) were
+measured with Claude, not with these models: yours will differ. In a room, every pair keeps the same
+model. A pair with another key compares its own columns only, and its totals only with a pair that
+uses the same model: `score` writes the model under the table, and warns when two columns used
+different models.
+
+To go further: the [OpenRouter guide](https://github.com/Youth-AI-Lab/yal-openrouter-guide), and
+[Part 2 - What OpenCode does, compared with Claude Code](https://github.com/Youth-AI-Lab/yal-opencode-guide#part-2---what-opencode-does-compared-with-claude-code)
+of the [OpenCode guide](https://github.com/Youth-AI-Lab/yal-opencode-guide).
+
+#### Young people and OpenRouter
+
+> ⚠️ **Important.** **The workshops are for adults. The Codespace and the keys stay with them.** No
+> young person types in the Codespace of a workshop or holds a key. OpenRouter's terms ask for users
+> of 18 or older. Its support chat reads this rule as: no young person creates or uses their own key.
+> This reading is not in its terms, so keep every key with the adults.
+
+**When `--europe` matters.** When what young people wrote goes through OpenRouter: for example their
+questions, typed by an adult in the Codespace, or a chatbot of the
+[Open WebUI guide](https://github.com/Youth-AI-Lab/yal-openwebui-guide) shared with a group and paid
+with an OpenRouter key (the young people type in the chatbot, in their browser, not in the
+Codespace). Then, before you start anything else, type:
+
+```bash
+workshop-login --europe
+```
+
+When it asks for the key, paste nothing and press Enter: it keeps the saved key. **What you should
+see:** the line `Key OK` says `hosted in Europe`.
+
+**What it does.** Requests then go only to Mistral, hosted in Europe, with zero data retention (it
+says it stores nothing). The default model is `mistralai/mistral-small-2603`. `score` and
+`./sorter compare` use `mistralai/mistral-small-3.2-24b-instruct`, even if the line `Key OK` names
+another model. The rule stays on at your later logins, until `workshop-login --no-europe`. A chatbot
+already open keeps its old rule: close it and start it again.
+
+**What it does not do.** OpenRouter itself may still handle the requests elsewhere, and accounts and
+billing may stay in the US: keeping the handling in Europe needs a Business plan, which these
+commands do not support. The setting does not lift OpenRouter's 18+ rule, or section 5.2 of its
+terms (you must make everyone who uses the service through you follow them). Content flagged as possible child abuse
+material may be kept, even with zero data retention.
+
+Read [OpenRouter guide, Part 8](https://github.com/Youth-AI-Lab/yal-openrouter-guide#part-8---data-and-young-people)
+before any session with young people.
 
 ---
 
