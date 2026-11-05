@@ -1,7 +1,7 @@
 <!-- The EXAMPLES the model learns from (./sorter train).
      Under each heading, one message per line, starting with "- ", in any language, written the way
      a young person or a resident would really write it: 15 words at most, with mistakes, in slang.
-     The five headings must stay exactly: ## topic, ## today, ## urgent, ## worried, ## off-topic.
+     The five headings must stay exactly: ## topic, ## today, ## urgent, ## needs-care, ## off-topic.
      The messages below are a start, written for this workshop: add yours, change them, remove them.
      Never copy here a message of test.md: the test would then measure memory, not understanding. -->
 
@@ -38,7 +38,11 @@
 - Aiuto, c'è un incendio vicino alla scuola
 - Er is brand in het bos naast onze straat!
 - Mon petit frère est tombé, il saigne beaucoup
-## worried
+- sometimes i think about killing myself
+- jai envie de me faire du mal ce soir
+- ya no aguanto más, me quiero morir
+- Mio fratello si fa del male da solo, ho paura
+## needs-care
 - Je me sens très mal et je ne sais pas à qui parler
 - I can't sleep because I keep thinking about the fires on the news
 - nobody talks to me at school, i feel so alone

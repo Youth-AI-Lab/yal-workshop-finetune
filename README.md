@@ -78,13 +78,13 @@ deserve the same treatment:
 | `topic` | a question about the chatbot's topic | "How can I protect my garden from wildfires?" | the chatbot answers, with its instructions and knowledge |
 | `today` | a question that needs the facts of the moment, tonight or this weekend included | "What is the fire danger level today?" | the chatbot answers with the live tool of the day (official source: workshop 4) |
 | `urgent` | a fire happening now, or a person in danger now, with or without fire: violence, threats, any risk to someone's life (thoughts of self-harm or suicide included) | "There is smoke coming from the woods behind my house!" | a fixed safety answer, at once: the emergency number, and an adult they trust |
-| `worried` | someone sad, scared, lonely or worried, with no danger right now | "nobody talks to me at school, i feel so alone" | a fixed kind answer, at once: an adult they trust, a support contact of your place, and the emergency number if someone is in danger |
+| `needs-care` | someone sad, scared, lonely or worried, with no danger right now | "nobody talks to me at school, i feel so alone" | a fixed kind answer, at once: an adult they trust, a support contact of your place, and the emergency number if someone is in danger |
 | `off-topic` | anything else | "Can you help me with my maths homework?" | a polite refusal that still says who can help (the emergency number, an adult they trust), without spending tokens |
 
 > ⚠️ **Important.** **People tell chatbots about themselves.** A chatbot about wildfires also
 > receives messages about fear, sadness, or a problem at home. It happens often, with any chatbot,
 > and you can plan for it: before a session, decide who reads a worrying message, and what the
-> chatbot says. Today's sorter separates two kinds: `urgent`, someone in danger now, and `worried`,
+> chatbot says. Today's sorter separates two kinds: `urgent`, someone in danger now, and `needs-care`,
 > someone who needs kind words and an adult, with no danger right now. A risk to someone's life is
 > always `urgent`. The sorter helps you think about it. It is not a safety net.
 
@@ -209,8 +209,13 @@ Codespace from the start: you install them now, once.
    ./sorter setup
    ```
 
-2. While it installs, listen to the facilitator, who presents the next two sections. You can read
-   them later.
+2. While it installs, copy the support line from the big screen. The facilitator shows a support
+   contact for young people of your country, checked on the official site of the service. Open
+   `tools/sorter.py` and go to line 63: `SUPPORT = "a support contact of your place (TO BE COMPLETED)"`.
+   Replace the text between the quotes with the facilitator's text, keep the quotes, and save.
+   `workshop-save` will later say that this file changed: that is expected, and the save does not keep it.
+
+3. Then listen to the facilitator, who presents the next two sections. You can read them later.
 
 **What you should see:** within about 2 min 30 (92 to 151 s in our tests, in real Codespaces and in a
 copy with 2 processors), `Libraries installed (… s)`, then `Model ready (… s). Next: ./sorter baseline`.
@@ -302,7 +307,7 @@ two sentences are, and you teach it something it does not know yet: your five cl
 
 ### How it sorts without training
 
-`messages/examples.md` holds 50 example messages, 10 per class, in six languages. Without any
+`messages/examples.md` holds 54 example messages in six languages: 10 in each class, except 14 under `urgent`. Without any
 training, the sorter computes the address of each example. Then it takes each test message, computes
 its address, finds **the closest example**, and gives the test message the class of that example.
 Nothing is learned here: it only compares.
@@ -310,7 +315,7 @@ Nothing is learned here: it only compares.
 ```mermaid
 flowchart LR
   M["A test message"] --> N["The model: 384 numbers"]
-  N --> C["Compare with the 50 examples"]
+  N --> C["Compare with the 54 examples"]
   C --> K["Take the class of the closest one"]
 ```
 
@@ -327,7 +332,7 @@ in meaning. Here, the closest piece does not go into a context: it only gives it
    ./sorter baseline
    ```
 
-**What you should see**, with the messages as they are in the repository (our test on 2026-11-04;
+**What you should see**, with the messages as they are in the repository (our test on 2026-11-05;
 the list of mistakes is shortened here):
 
 ```text
@@ -336,23 +341,22 @@ WITHOUT training: each message gets the class of its closest example in messages
 30 of 40 messages in the right class.
 
 Expected (rows) and chosen (columns):
-                 topic      today     urgent    worried  off-topic
+                 topic      today     urgent needs-care  off-topic
       topic          8          0          0          0          0
       today          1          5          1          0          1
-     urgent          1          0          5          2          0
-    worried          1          0          1          6          0
-  off-topic          0          0          1          1          6
+     urgent          1          0          6          1          0
+ needs-care          1          0          1          6          0
+  off-topic          0          0          2          1          5
 
 Mistakes:
-  expected today     chose topic     (0.61)  Are barbecues allowed this weekend?
+  expected today      chose topic      (0.61)  Are barbecues allowed this weekend?
   …
-  expected urgent    chose worried   (0.48)  Ma copine dit qu'elle n'a plus envie de vivre  <- an emergency that would not get the safety answer
-  expected urgent    chose worried   (0.61)  Someone at school keeps hitting me and I'm afraid  <- an emergency that would not get the safety answer
+  expected urgent     chose needs-care (0.61)  Someone at school keeps hitting me and I'm afraid  <- an emergency that would not get the safety answer
   …
-  expected off-topic chose urgent    (0.32)  Chi ha dipinto la Gioconda?
+  expected off-topic  chose urgent     (0.32)  Chi ha dipinto la Gioconda?
 
-Emergencies missed: 3. This is the mistake that matters most.
-Worried messages missed: 1. A worried message sorted as urgent is not counted: it still gets the safety answer.
+Emergencies missed: 2. This is the mistake that matters most.
+Needs-care messages missed: 1. A needs-care message sorted as urgent is not counted: it still gets the safety answer.
 ```
 
 ### Reading the result
@@ -368,17 +372,17 @@ diagonal is right, and everything else is a mistake.
 | The table | Where the mistakes go. The row `urgent` is the most serious one: every number outside its `urgent` column is an emergency that would not get the safety answer. |
 | `Mistakes:` | Each wrong message, with what was expected and what was chosen. The number in brackets is how close the nearest example was. The arrow `<-` marks the mistakes that matter most. |
 | `Emergencies missed:` | The number of emergencies sorted as something else. |
-| `Worried messages missed:` | The number of worried messages sorted as `topic`, `today` or `off-topic`. A worried message sorted as `urgent` is not counted: it still gets an answer that names an adult. |
+| `Needs-care messages missed:` | The number of `needs-care` messages sorted as `topic`, `today` or `off-topic`. A `needs-care` message sorted as `urgent` is not counted: it still gets an answer that names an adult. |
 
 Notice four things in these mistakes. Three of the ten are `today` messages. "Are barbecues allowed
 this weekend?" is close to the `topic` examples, because it talks about the same things: **close in
 meaning does not mean same class.** What makes a message `today` is a small part of its meaning, and
 the model gives it no special weight. That is what training will change. Then, look at "Chi ha dipinto
 la Gioconda?" (who painted the Mona Lisa?): its closest example is only at 0.32, and it still receives
-a class, here `urgent`. A classifier always chooses, even when nothing fits. Then, two emergencies went
-to `worried`: a friend who no longer wants to live, and a young person hit at school. Both talk about
-fear, like many `worried` examples. Finally, `urgent` and `worried` confuse each other in both
-directions: this border is the hardest one of the day.
+a class, here `urgent`. A classifier always chooses, even when nothing fits. Then, an emergency went
+to `needs-care`: a young person hit at school. It talks about fear, like many `needs-care` examples.
+Finally, `urgent` and `needs-care` confuse each other in both directions: this border is the hardest
+one of the day.
 
 > ⚠️ **Important.** **The mistake that matters most is an emergency sorted as something else.** A
 > message about the weather sorted as `topic` costs a few tokens. "Help, the field next to us is on
@@ -386,14 +390,14 @@ directions: this border is the hardest one of the day.
 > first, every time.
 
 > 💡 **Tip.** **Checkpoint**: you can point, in the table, at the cell of "an emergency sorted as
-> worried", and say how many messages are in it.
+> needs-care", and say how many messages are in it.
 
 ### Think about it
 
 1. Why can a model that has learned no classes still sort "Au feu !" as urgent?
 2. Which would you rather have: 38 right out of 40 with one emergency missed, or 36 right with none
    missed?
-3. An emergency sorted as `worried` gets kind words and the emergency number "if someone is in danger
+3. An emergency sorted as `needs-care` gets kind words and the emergency number "if someone is in danger
    now", not the safety answer. Is that as bad as an emergency sorted as `off-topic`?
 
 ---
@@ -417,8 +421,8 @@ a message and the class it belongs to, and the model only learns from what the m
 have in common. The word `urgent` means nothing to it: you could name the class `A`, and it would
 learn the same thing. So if all your `urgent` examples talk about fire, the model can learn that
 `urgent` means fire, and a young person who writes "someone keeps hitting me" may not be seen as an
-emergency. In the same way, if your `worried` examples are full of fear and your `urgent` examples are
-not, "I'm scared, someone is following me" can land in `worried`. **What your examples leave out, the
+emergency. In the same way, if your `needs-care` examples are full of fear and your `urgent` examples are
+not, "I'm scared, someone is following me" can land in `needs-care`. **What your examples leave out, the
 model does not learn.**
 
 ### Discovering the files
@@ -441,9 +445,9 @@ words, lengths and languages for the same class. Above all, add the **hard cases
 near a border between two classes: an emergency that contains a question ("there is smoke, what do I
 do?"), a person in danger with no fire ("someone is following me"), an off-topic message about fire
 ("light my birthday candles?"), a `today` question that does not say "today" ("can we barbecue this
-weekend?"). The border between `urgent` and `worried` needs the most care: fear with a danger now
+weekend?"). The border between `urgent` and `needs-care` needs the most care: fear with a danger now
 ("they wait for me after school to hit me") is `urgent`, fear with no danger now ("I'm scared of the
-fires on TV") is `worried`, and a wish to die or to hurt oneself is always `urgent`.
+fires on TV") is `needs-care`, and a wish to die or to hurt oneself is always `urgent`.
 
 One rule for both files: **every message is invented, with nothing about a real person**. In Part 5,
 `./sorter compare` sends each test message to Anthropic, or through OpenRouter to a company that runs
@@ -459,7 +463,7 @@ the model.
 
 1. **Add at least ten messages per class** to `messages/examples.md`, in your language, under the
    five headings. Keep the headings exactly as they are (`## topic`, `## today`, `## urgent`,
-   `## worried`, `## off-topic`), and start each message with `- `. Save.
+   `## needs-care`, `## off-topic`), and start each message with `- `. Save.
 2. **Write a test for another pair**: on paper or in the chat of the session, three messages per
    class (15 in all), in your language, that the other pair has never seen. Write the class above each group: it
    is the right answer of the test. Give them your messages with their classes, and receive theirs.
@@ -541,20 +545,20 @@ flowchart TD
 
 **First, the body, with pairs of messages.** The body gives addresses, not classes, so you cannot ask it "which
 class is this?". You can only ask "are these two close?". Pairs turn your examples into that question,
-and they turn a few examples into many training rounds. From 50 examples, it makes 1,000 pairs: 500 of the same class, and 500 of different classes.
+and they turn a few examples into many training rounds. From the 54 examples of the repository, it makes 1,080 pairs: 540 of the same class, and 540 of different classes.
 For each pair it knows the target: closeness 1 for the same class, 0 for different classes. So training
 tries to turn the arrows: the same direction for the same class, a right angle for different classes.
-It never asks for opposite directions. With our 50 examples, the two pairs shown further down went from
-78° to 57° (same class) and from 58° to 72° (different classes). Training takes
+It never asks for opposite directions. With our 54 examples, the two pairs shown further down went from
+78° to 50° (same class) and from 58° to 75° (different classes). Training takes
 16 pairs at a time, measures how far their closeness is from the target, and changes the numbers of
-the body a tiny bit. This is the loop of Part 1. With 1,000 pairs, 16 at a time, there are **63 rounds**,
+the body a tiny bit. This is the loop of Part 1. With 1,080 pairs, 16 at a time, there are **68 rounds**,
 the number on the long progress bar. Each example gives 20 pairs, so twice as
 many examples take about twice as long.
 
-The 20 is a setting, not a rule: `num_iterations=10` in `tools/sorter.py` asks for 10 × 50 pairs of each
-kind. Count on paper: each of the 50 messages meets 49 others, and that counts each pair twice, so
-50 × 49 / 2 = 1,225 different pairs. In a class of 10, it is 10 × 9 / 2 = 45, so 5 × 45 = 225 pairs of the
-same class, and SetFit goes round its list again to reach 500. With 100 examples it makes 2,000 pairs, although
+The 20 is a setting, not a rule: `num_iterations=10` in `tools/sorter.py` asks for 10 × 54 pairs of each
+kind. Count on paper: each of the 54 messages meets 53 others, and that counts each pair twice, so
+54 × 53 / 2 = 1,431 different pairs. In a class of 10, it is 10 × 9 / 2 = 45; in the 14 of `urgent`,
+14 × 13 / 2 = 91. So 4 × 45 + 91 = 271 pairs of the same class, and SetFit goes round its list again to reach 540. With 100 examples it makes 2,000 pairs, although
 4,950 different ones exist. That is why the time only doubles.
 
 **Then, the head, with borders.** Now the addresses are better, and the body stops changing. SetFit
@@ -584,12 +588,12 @@ and 0 would be perfect. (The score of your test, like 30 of 40, works the other 
 Choosing this score means choosing what "better" means, because the training
 will do anything that lowers it, and nothing else.
 
-For one pair, the score takes three steps. Take the closeness of the two messages, subtract the target (1 for the same class, 0 for different classes), and multiply this gap by itself. Here are two real pairs from the 50 examples, before and after the training:
+For one pair, the score takes three steps. Take the closeness of the two messages, subtract the target (1 for the same class, 0 for different classes), and multiply this gap by itself. Here are two real pairs from the 54 examples, before and after the training:
 
 | Two messages | Target | Closeness before | Training score before | Closeness after | Training score after |
 |---|---|---|---|---|---|
-| "My friend is scared and says he wants to hurt himself" / "Help, the field next to us is on fire" | 1 | 0.207 | 0.63 | 0.551 | 0.20 |
-| "What is the fire danger level today?" / "How can I protect my garden from wildfires?" | 0 | 0.525 | 0.28 | 0.316 | 0.10 |
+| "My friend is scared and says he wants to hurt himself" / "Help, the field next to us is on fire" | 1 | 0.207 | 0.63 | 0.636 | 0.13 |
+| "What is the fire danger level today?" / "How can I protect my garden from wildfires?" | 0 | 0.525 | 0.28 | 0.254 | 0.06 |
 
 Multiplying the gap by itself makes big gaps count much more than small ones: a gap of 0.8 costs 0.64,
 and a gap of 0.2 costs 0.04, sixteen times less. So the pairs that are furthest from their target push the numbers hardest. The score of a round is the average over its 16 pairs.
@@ -605,7 +609,7 @@ idea: give the largest possible share to the right class of each example.
 ### When does the training stop?
 
 Nothing decides along the way that the model is good enough. The number of rounds is fixed in advance
-in `tools/sorter.py`: one pass over the pairs, so 63 rounds for 50 examples, and 125 for 100. That keeps the training to one to three minutes.
+in `tools/sorter.py`: one pass over the pairs, so 68 rounds for the 54 examples of the repository, 63 for 50, and 125 for 100. That keeps the training to one to three minutes.
 
 In larger trainings, people set some messages aside, compute the score on them regularly, and stop
 when this score no longer goes down. We stopped nothing here: we only watched. We computed the score
@@ -614,7 +618,7 @@ with the settings of `./sorter train`, then in a longer one of 200 rounds. Do no
 this way: choosing the number of rounds from your test would tune the model on it, as in step 7.
 
 > ℹ️ **Note.** **This chart comes from the first version of the workshop**, with four classes (no
-> `worried`), 40 examples and 32 test messages, measured on 2026-10-31. We have not measured it again
+> `needs-care`), 40 examples and 32 test messages, measured on 2026-10-31. We have not measured it again
 > with five classes, so its numbers are not those of your files. What it shows about training scores
 > does not depend on the number of classes.
 
@@ -663,11 +667,12 @@ never saw, tells you whether the sorter got better, and you decide when it is go
    Watch the big screen: the long bar on your terminal counts the rounds the facilitator explains.
    **When your training ends, start step 4 and keep listening to the talk.**
 
-   **What you should see:** `Fine-tuning on … examples (topic …, today …, urgent …, worried …,
-   off-topic …)…`, a few progress bars (the long one counts the rounds: 63 for 50 examples, 125 for
-   100), then `Fine-tuned in … s`. In our test on 2026-11-04, with 2 processors: 71 to 78 s with the 50
-   starting examples, 191 s with 100. The picture below comes from the first version, with four classes
-   and 40 examples: your line has one more class, and your bar counts 63 rounds, not 50.
+   **What you should see:** `Fine-tuning on … examples (topic …, today …, urgent …, needs-care …,
+   off-topic …)…`, a few progress bars (the long one counts the rounds: 68 for the 54 examples of the
+   repository, 125 for 100), then `Fine-tuned in … s`. In our test on 2026-11-05, with 2 processors: 64 s
+   with the 54 starting examples. On 2026-11-04: 71 to 78 s with 50, 191 s with 100. The picture below
+   comes from the first version, with four classes and 40 examples: your line has one more class, and
+   your bar counts 68 rounds, not 50.
 
    ![The terminal after ./sorter train, first version with four classes: the number of examples per class, the long progress bar at 50 of 50, then the line Fine-tuned with its number of seconds.](images/sorter-train.png)
 
@@ -678,53 +683,60 @@ never saw, tells you whether the sorter got better, and you decide when it is go
    ```
 
    **What you should see:** the same table as the baseline, for the fine-tuned model. With the
-   messages of the repository, in our test on 2026-11-04: 38 of 40, 2 emergencies missed, 5 to 6 ms per
+   messages of the repository, in our test on 2026-11-05: 37 of 40, 1 emergency missed, 5 ms per
    message in a batch of 40:
 
    ```text
    The FINE-TUNED model, on the 40 messages of messages/test.md (5 ms per message):
 
-   38 of 40 messages in the right class.
+   37 of 40 messages in the right class.
 
    Expected (rows) and chosen (columns):
-                    topic      today     urgent    worried  off-topic
+                    topic      today     urgent needs-care  off-topic
          topic          8          0          0          0          0
          today          0          8          0          0          0
-        urgent          1          0          6          1          0
-       worried          0          0          0          8          0
-     off-topic          0          0          0          0          8
+        urgent          1          0          7          0          0
+    needs-care          0          0          1          7          0
+     off-topic          1          0          0          0          7
 
    Mistakes:
-     expected urgent    chose topic     (0.53)  I can see flames on the hill, what do I do?  <- an emergency that would not get the safety answer
-     expected urgent    chose worried   (0.48)  Ma copine dit qu'elle n'a plus envie de vivre  <- an emergency that would not get the safety answer
+     expected urgent     chose topic      (0.50)  I can see flames on the hill, what do I do?  <- an emergency that would not get the safety answer
+     expected needs-care chose urgent     (0.53)  Ik maak me zorgen om mijn opa, hij is ziek
+     expected off-topic  chose topic      (0.45)  How do I bake a chocolate cake?
 
-   Emergencies missed: 2. This is the mistake that matters most.
-   Worried messages missed: 0. A worried message sorted as urgent is not counted: it still gets the safety answer.
-   Not sure (below 0.5) for 1 message(s): a real chatbot would pass them to the chatbot, whose own rules must also cover emergencies.
-     (0.49)  How do I bake a chocolate cake?
+   Emergencies missed: 1. This is the mistake that matters most.
+   Needs-care messages missed: 0. A needs-care message sorted as urgent is not counted: it still gets the safety answer.
+   Not sure (below 0.5) for 2 message(s): a real chatbot would pass them to the chatbot, whose own rules must also cover emergencies.
+     (0.50)  I can see flames on the hill, what do I do?  <- an emergency that would not get the safety answer
+     (0.45)  How do I bake a chocolate cake?
    ```
 
-   Read the second mistake twice. "Ma copine dit qu'elle n'a plus envie de vivre" (my girlfriend says
-   she no longer wants to live) is a risk to someone's life, so it belongs to `urgent`. The sorter chose
-   `worried`: it would get kind words and the emergency number "if someone is in danger now", not the
-   safety answer. Only one of the ten `urgent` examples talks about hurting oneself, and many `worried`
-   examples talk about feeling bad.
+   Now look for a message that is **not** in the list: "Ma copine dit qu'elle n'a plus envie de vivre"
+   (my girlfriend says she no longer wants to live). It is a risk to someone's life, so it belongs to
+   `urgent`. In our first test, with only one `urgent` example about hurting oneself, the sorter chose
+   `needs-care` (0.48): kind words and the emergency number "if someone is in danger now", not the safety
+   answer. We then added four examples about wanting to die or hurting oneself under `## urgent`, and it
+   is now `urgent` (0.60). One of them, "ya no aguanto más, me quiero morir" (I can't take it any more, I
+   want to die), is close to it in meaning, so this part of the score is tuned on the test, like your
+   improved score in step 7. The new examples also moved a worry about a sick grandfather to `urgent`: a
+   false alarm, which still names an adult they trust.
 
    On your own test, you will probably see mistakes. The score on it is your **first score**: the one
    honest test of your model, and the one you compare with the big model in Part 5. Here, the number in brackets is not a
    closeness any more: it is the confidence of the sorter. `Not sure (below 0.5)` lists the messages of 15
-   words or fewer with a low confidence, not sorted as `urgent` or `worried`, whether their class is
-   right or not. `Too long to sort` lists longer ones with no sure emergency or worry. `Right but below
-   0.5` lists emergencies and worried messages sorted right with little margin. Step 8 and Troubleshooting explain what a chatbot would do with them.
+   words or fewer with a low confidence, not sorted as `urgent` or `needs-care`, whether their class is
+   right or not. `Too long to sort` lists longer ones with no sure emergency and nothing sure that needs
+   care. `Right but below 0.5` lists emergencies and `needs-care` messages sorted right with little margin. Step 8 and Troubleshooting explain what a chatbot would do with them.
 
-   > ℹ️ **Note.** **Our 38 of 40 says little.** These test messages were written together with the
-   > examples. Your test, written by another pair, is the one that counts: expect a lower score.
+   > ℹ️ **Note.** **Our 37 of 40 says little.** These test messages were written together with the
+   > examples, and four examples were added after reading a mistake of this test. Your test, written by
+   > another pair, is the one that counts: expect a lower score.
 
 5. **Compare** with the baseline and with your prediction. Read `Emergencies missed` first, then the
    cells of the table that changed. Your test has 15 messages, so one or two messages prove little.
    With only 3 emergencies, `Emergencies missed: 0` proves little too: step 8 shows how little.
-   Write your baseline score and your first score on the board, with the emergencies and the worried
-   messages missed.
+   Write your baseline score and your first score on the board, with the emergencies and the
+   `needs-care` messages missed.
 6. **Look at what the training made.** The facilitator shows this once on the big screen, with:
 
    ```bash
@@ -735,10 +747,10 @@ never saw, tells you whether the sorter got better, and you decide when it is go
    (about 9 KB). The model stays in your Codespace until you delete the Codespace (Part 6, step 2).
 
    > ⚠️ **Important.** **The folder keeps some of your sentences.** Next to the model, SetFit writes a
-   > description, `README.md`, that copies some examples: 18 of the 50 in our test. The model never
+   > description, `README.md`, that copies some examples: 19 of the 54 in our test. The model never
    > reads this file, but anyone who receives the folder can.
 7. **Improve.** If you have lines under `Mistakes:` or `Right but below 0.5`, take two at most,
-   emergencies first, then worried messages. For each one, add two examples that look like it (not the test message itself)
+   emergencies first, then `needs-care` messages. For each one, add two examples that look like it (not the test message itself)
    under the right heading. Fine-tune and test again: each training starts again from the original model,
    with all your examples. Write this **improved score** on your own paper, not on the board. Nobody
    starts a training after 1 h 15 of the session.
@@ -762,27 +774,31 @@ never saw, tells you whether the sorter got better, and you decide when it is go
 
    **What you should see:** for each message, the class, the confidence (from 0.2 to 1: with five
    classes, the largest share is at least a fifth), and what would happen in a real chatbot. Here with
-   three messages, in our test on 2026-11-04 (the messages you type appear after `>`):
+   three messages, in our test on 2026-11-05 (the messages you type appear after `>`):
 
    ```text
    Type a message and press Enter. An empty line to stop.
    > Il y a de la fumée derrière l'école !
-   Class: urgent (confidence 0.94)
+   Class: urgent (confidence 0.92)
    What would happen: a fixed safety answer, at once: emergency number 112, and an adult they trust.
    > help!!
-   Class: off-topic (confidence 0.60)
-   What would happen: a polite refusal that still says who can help (112, an adult they trust), with no chatbot (no tokens spent).
+   Class: off-topic (confidence 0.44)
+   What would happen: not sure (below 0.5), so it goes to the chatbot, whose own rules must also cover emergencies.
    > I feel like nobody would care if I disappeared
-   Class: worried (confidence 0.95)
+   Class: needs-care (confidence 0.86)
    What would happen: a fixed kind answer, at once: talk to an adult they trust, a support contact of your place (TO BE COMPLETED), and 112 if someone is in danger now.
    ```
 
    Below 0.5, the sorter is not sure: the message would go to the chatbot. The exception is a message of
-   15 words or fewer sorted as `urgent` or `worried`: it would get the safety answer or the kind answer
-   all the same. Notice "help!!": the sorter chose `off-topic`, a real mistake. Then the last message: a
-   young person who feels that nobody would care if they disappeared may be thinking of dying. That is
-   `urgent`, and the sorter chose `worried` at 0.95. Confidence says how sure the sorter is, not whether
-   it is right: in our test, "Help me please." came out `off-topic` at 0.80, and "aidez moi" at 0.77.
+   15 words or fewer sorted as `urgent` or `needs-care`: it would get the safety answer or the kind answer
+   all the same. If you typed the support line in Part 1, the last answer shows it instead of
+   `TO BE COMPLETED`. Notice "help!!": the sorter chose `off-topic` and is not sure, so the message would go to
+   the chatbot, not to the safety answer. Then the last message: a young person who feels that nobody would
+   care if they disappeared may be thinking of dying. That is `urgent`, and the sorter chose `needs-care` at
+   0.86, even with the four examples about wanting to die. Confidence says how sure the sorter is, not
+   whether it is right: in our test, "Help me please." came out `off-topic` at 0.60. Examples also change
+   messages that look like none of them: since those four examples were added, "aidez moi", "aiuto",
+   "hulp" and "ajuda" come out `urgent` (0.48 to 0.57), where they came out `off-topic` before.
 
    > ℹ️ **Note.** **What does `Emergencies missed: 0` prove?** It shows that the emergencies of this test
    > were sorted `urgent`, and nothing about any others. Your test has 3 emergencies. Imagine a
@@ -790,7 +806,7 @@ never saw, tells you whether the sorter got better, and you decide when it is go
    > your test are like random picks, the chance that it catches all of them is 0.9 × 0.9 × 0.9 = 0.73.
    > So about 3 times out of 4, a sorter that does miss emergencies still shows `Emergencies missed: 0`.
    > With the 8 emergencies of our test, it still shows 0 about 4 times out of 10 (0.9 multiplied 8 times gives
-   > 0.43). So `0` means "no mistake seen", not "no mistake". Ours missed 2 of those 8, and "help!!"
+   > 0.43). So `0` means "no mistake seen", not "no mistake". Ours missed 1 of those 8, and "help!!"
    > came out `off-topic`. That is why you try short cries, and messages about wanting to die, here.
 
    > 💡 **Tip.** Type the messages after `./sorter try`, not on the same line. On the command line,
@@ -799,7 +815,7 @@ never saw, tells you whether the sorter got better, and you decide when it is go
 
 ### What the training changes
 
-We measured what the training changed in the body, with the 50 starting examples (2026-11-04). Almost
+We measured what the training changed in the body, with the 54 starting examples (2026-11-05). Almost
 all the numbers moved (99.9%), but most of them learned nothing. About 96 million are a table with one
 line per token. In the first version, with four classes and 40 examples (2026-10-31), only 281 lines of
 this table, out of 250,037, were for tokens that appear in the examples: they moved by about 0.4%. All
@@ -810,25 +826,25 @@ move enough to be seen:
 
 | Closeness, on average | Before training | After training |
 |---|---|---|
-| Two examples of the same class | 0.36 | 0.67 |
+| Two examples of the same class | 0.36 | 0.65 |
 | Two examples of different classes | 0.20 | 0.20 |
-| A `today` example and a `topic` example | 0.38 | 0.30 |
-| An `urgent` example and a `worried` example | 0.23 | 0.35 |
+| A `today` example and a `topic` example | 0.38 | 0.27 |
+| An `urgent` example and a `needs-care` example | 0.25 | 0.45 |
 
 And with real sentences:
 
 | Two messages | Same class? | Before | After |
 |---|---|---|---|
-| "My friend is scared and says he wants to hurt himself" / "Help, the field next to us is on fire" | yes, `urgent` | 0.21 | 0.55 |
-| "Mag ik vandaag een kampvuur maken?" / "Quel est le niveau de risque incendie aujourd'hui ?" | yes, `today` | 0.32 | 0.62 |
-| "What is the fire danger level today?" / "How can I protect my garden from wildfires?" | no | 0.53 | 0.32 |
-| "Je me sens très mal et je ne sais pas à qui parler" / "Help, the field next to us is on fire" | no: `worried` and `urgent` | 0.14 | 0.20 |
+| "My friend is scared and says he wants to hurt himself" / "Help, the field next to us is on fire" | yes, `urgent` | 0.21 | 0.64 |
+| "Mag ik vandaag een kampvuur maken?" / "Quel est le niveau de risque incendie aujourd'hui ?" | yes, `today` | 0.32 | 0.67 |
+| "What is the fire danger level today?" / "How can I protect my garden from wildfires?" | no | 0.53 | 0.25 |
+| "Je me sens très mal et je ne sais pas à qui parler" / "Help, the field next to us is on fire" | no: `needs-care` and `urgent` | 0.14 | 0.28 |
 
 Look at the first line. A friend who wants to hurt himself and a field on fire have little in common in
 meaning. For this model, they now do, because you put both under `urgent`: **the map of meaning now
 also shows your classes.** Now look at the last line. In the first version, "Je me sens très mal" was
 also under `urgent`, and training brought these two sentences from 0.14 to 0.52. Today it is under
-`worried`, and they only reach 0.20. The same sentences, other headings, another map.
+`needs-care`, and they only reach 0.28. The same sentences, other headings, another map.
 
 The figure below shows such a map. It comes from the first version, with four classes, and we have not
 drawn it again with five. It squeezes the 384 numbers of each message onto a sheet of paper, and only a
@@ -839,27 +855,27 @@ are the messages it learned from, and empty shapes are test messages that it nev
 ![Two maps of the messages, first version with four classes. Same axes on both maps. Before training, each class already leans towards its own side, but the groups touch, above all off-topic and urgent. After training, the four groups are further apart, and the test messages sit in the group of their class.](images/map-before-after.png)
 
 There are limits. The pairs ask for closeness 1 or 0, and these small rounds do not get there: two
-examples of the same class end at 0.67, and two of different classes stay at 0.20 on average. And not
-every pair moves the right way. `off-topic` came closer to `today` (0.15 to 0.33): "Is the forest
-closed today?" and the maths homework went from 0.04 to 0.35. `urgent` and `worried` came closer too
-(0.23 to 0.35): fear is in both. A `topic` question and an `urgent` message about a fire near a house
-came closer (0.70 to 0.78).
+examples of the same class end at 0.65, and two of different classes stay at 0.20 on average. And not
+every pair moves the right way. `off-topic` came closer to `today` (0.15 to 0.36): "Is the forest
+closed today?" and the maths homework went from 0.04 to 0.38. `urgent` and `needs-care` came closer
+too (0.25 to 0.45): fear is in both, and so is feeling bad. A `topic` question and an `urgent` message
+about a fire near a house stayed as close as before (0.70).
 
 The body does not do all the work either. We switched each part on and off, on the 40 test messages:
 
-| What sorts | Score | Emergencies missed | Worried messages missed |
+| What sorts | Score | Emergencies missed | Needs-care messages missed |
 |---|---|---|---|
-| The body before training, closest example (`./sorter baseline`) | 30 of 40 | 3 | 1 |
+| The body before training, closest example (`./sorter baseline`) | 30 of 40 | 2 | 1 |
 | The body before training, with a trained head | 38 of 40 | 1 | 0 |
-| The body after training, closest example, no head | 35 of 40 | 3 | 0 |
-| The body after training, with a trained head (`./sorter test`) | 38 of 40 | 2 | 0 |
+| The body after training, closest example, no head | 36 of 40 | 1 | 0 |
+| The body after training, with a trained head (`./sorter test`) | 37 of 40 | 1 | 0 |
 
 A difference of one or two messages proves little on 40 messages written together with the examples.
-Here, the head alone missed one emergency fewer than the full sorter, in one run. Each part does its
+Here, the head alone sorted one message more than the full sorter, in one run. Each part does its
 share, and only a test lets you check it.
 
 > 💡 **Tip.** **Checkpoint**: two scores on the board (baseline, first), and the number of
-> emergencies and worried messages missed for each. And you can say what the body learned, and what the head learned.
+> emergencies and `needs-care` messages missed for each. And you can say what the body learned, and what the head learned.
 
 ### Think about it
 
@@ -918,7 +934,7 @@ can miss what its examples leave out. In both cases, only the test tells you.
    **What you should see:** the same table, then the time, the tokens and the estimated cost, for the
    test and for 1,000 messages.
 
-   > ℹ️ **Note.** **The figures below come from the first version**, with four classes (no `worried`),
+   > ℹ️ **Note.** **The figures below come from the first version**, with four classes (no `needs-care`),
    > 32 test messages and an older description of the classes. They have not been measured again with
    > five classes: your table has one more row and column, and your result may differ.
 
@@ -941,7 +957,7 @@ can miss what its examples leave out. In both cases, only the test tells you.
    |---|---|---|
    | Right answers on the test | | |
    | Emergencies missed | | |
-   | Worried messages missed | | |
+   | Needs-care messages missed | | |
    | Time per message | 5 to 6 ms in a batch | |
    | Cost per 1,000 messages | none per message | |
    | Works without the network | yes | no |
@@ -956,7 +972,7 @@ can miss what its examples leave out. In both cases, only the test tells you.
 > or through OpenRouter to a company that runs the model.
 > Your small model sorts inside the Codespace. But in a real chatbot, `topic`, `today`, unsure and long
 > messages then reach the big model, so for messages that young people write, look at both models.
-> `urgent` and `worried` messages, sure or not, of 15 words or fewer, would not reach it.
+> `urgent` and `needs-care` messages, sure or not, of 15 words or fewer, would not reach it.
 
 > ⚠️ **Important.** **Before messages that young people wrote go through OpenRouter**, read
 > [SETUP.md, Young people and OpenRouter](SETUP.md#young-people-and-openrouter): the keys stay with
@@ -982,7 +998,7 @@ can miss what its examples leave out. In both cases, only the test tells you.
 
 ### Step 1 - Where the pieces could go
 
-Here is how a sorter **could sit before a real chatbot**. `urgent`, `worried` and `off-topic` would
+Here is how a sorter **could sit before a real chatbot**. `urgent`, `needs-care` and `off-topic` would
 get a fixed answer that never reaches the big model: the safety answer, the kind answer and the polite
 refusal. `topic` would reach the chatbot with its instructions and
 knowledge, and `today` the chatbot with the live tool: as in workshop 4, the chatbot itself calls the
@@ -1001,7 +1017,7 @@ A sorter makes mistakes, so **all three fixed answers would name the emergency n
 they trust**, and the kind answer also a support contact of your place. That is not a safety net: a
 missed cry for help gets a refusal with a number, or kind words when someone is in danger now, and a
 young person may read that as being turned away or not taken seriously. An emergency can also land in `today`: in our test, "The
-fire is close to our camp today" came out `today` at 0.56 (0.64 in the first version), and only the
+fire is close to our camp today" came out `today` at 0.64, and only the
 chatbot's own rules would then cover it. 112 is the European number: before you reuse this, check the number and the support contacts
 of your place (the constants `EMERGENCY` and `SUPPORT` in `tools/sorter.py`). `SUPPORT` says `TO BE
 COMPLETED` until your organisation writes its own support line for young people there, checked on the
@@ -1054,15 +1070,16 @@ The common problems (key, Codespace, terminal) are in the
 sentences is also read sentence by sentence, on `.`, `!`, `?`, `…` and line breaks, not commas. A
 sentence where `urgent` is the largest share counts as an emergency. It gets the safety answer if the
 message has 15 words or fewer, or if that share is 0.5 or more. If no sentence is `urgent`, a sentence
-where `worried` is the largest share makes the message `worried`, with the same rule for the kind answer:
-`urgent` always wins over `worried`. Past 15 words with no sure emergency or worry, the
+where `needs-care` is the largest share makes the message `needs-care`, with the same rule for the kind
+answer: `urgent` always wins over `needs-care`. Past 15 words with nothing sure that is `urgent` or
+`needs-care`, the
 message is not sorted: it goes to the chatbot. This includes an emergency sorted as `urgent` below 0.5:
 `Emergencies missed` does not count it, so `./sorter test` lists it under `Too long to sort`, with an
 arrow. We crossed 5 emergencies with lengths and positions. With punctuation, all 240 messages got the
 safety answer. Without punctuation, 29 of 240 did and 211 went to the chatbot, none refused and none sent
 to the live tool. We did not measure whether the chatbot's rules then cover them. And of 8 growing excerpts of one prevention text, 6 got the safety answer by mistake.
 This shows how the rule works: it is not a detection rate. These counts were measured with the four classes
-of the first version (2026-10-31 and 2026-11-01), before `worried` existed: not measured again.
+of the first version (2026-10-31 and 2026-11-01), before `needs-care` existed: not measured again.
 
 **`The libraries are not installed yet. Type: ./sorter setup`** - Type it, and wait for
 `Model ready`. Each new Codespace needs it once.
@@ -1072,15 +1089,20 @@ Type `./sorter setup` again: it starts from where it stopped. If it keeps failin
 `./sorter compare` (Part 5) works without the setup.
 
 **`messages/…: … line(s) to fix`** - The sorter lists each line it cannot read, with its number.
-The headings must be exactly `## topic`, `## today`, `## urgent`, `## worried`, `## off-topic`. Each message
+The headings must be exactly `## topic`, `## today`, `## urgent`, `## needs-care`, `## off-topic`. Each message
 starts with `- `, a dash and a space: not `*`, not `1.`, not the long dash that a word processor
 puts in.
+
+**`Note: messages/… uses an old heading (… ## worried is now ## needs-care)`** - The file was written
+before 2026-11-05, when the class `worried` got its new name, `needs-care`: for example, a save of an
+earlier session. Its messages are read under `## needs-care`, so nothing is lost. Change the heading in
+the file when you can, and the note goes away. A model trained before that day works too.
 
 **`Each class needs at least 2 examples`** - A heading has fewer than two messages under it.
 
 **`Emergencies missed: none tested`** - The score says nothing about emergencies. Put the other pair's
 emergencies under `## urgent` in `messages/test.md`, then run the command again. The same for
-`Worried messages missed: none tested` and `## worried`.
+`Needs-care messages missed: none tested` and `## needs-care`.
 
 **The terminal shows `dquote>` and waits.** - Press `Ctrl+C`, type `./sorter try` alone, then type your
 message.

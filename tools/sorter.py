@@ -15,7 +15,7 @@ The five classes (headings of messages/examples.md and messages/test.md):
                 answers with the live tool of the day (workshop 4)
     urgent      a fire happening now, or a person in danger now (violence, threats, any risk to someone's life,
                 thoughts of self-harm or suicide included): a fixed safety answer, at once
-    worried     someone sad, scared, lonely or worried, with no danger right now: a fixed kind answer, at once
+    needs-care  someone sad, scared, lonely or worried, with no danger right now: a fixed kind answer, at once
     off-topic   anything else: a polite refusal that still says who can help, without spending tokens
 
 Nothing here changes the chatbot of the earlier workshops: this is a separate tool, to see what fine-tuning
@@ -51,9 +51,12 @@ TEST = HERE / "messages" / "test.md"
 # A small model that knows about 50 languages (Apache 2.0), frozen at one version.
 BASE = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 REVISION = "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
-CLASSES = ["topic", "today", "urgent", "worried", "off-topic"]
+CLASSES = ["topic", "today", "urgent", "needs-care", "off-topic"]
 # The two classes that need a person, not the big model. Their order matters: when a message is both, urgent wins.
-CARE = ["urgent", "worried"]
+CARE = ["urgent", "needs-care"]
+# The old name of a class (needs-care was called worried until 2026-11-05). A file or a model saved before
+# still works: the old name is read as the new one.
+OLD_NAMES = {"worried": "needs-care"}
 EMERGENCY = "112"     # the European number: check the one of your country
 # A support line for young people of your place. Your organisation writes its own here: never a number found
 # on the web without checking it on the official page of the service.
@@ -63,8 +66,8 @@ WHAT_HAPPENS = {
     "today": "the chatbot answers with the live tool of the day (official source: workshop 4)",
     "urgent": f"a fixed safety answer, at once: emergency number {EMERGENCY}, and an adult they trust",
     # The kind answer names the emergency number too: an emergency wrongly sorted here must still reach help.
-    "worried": f"a fixed kind answer, at once: talk to an adult they trust, {SUPPORT}, and {EMERGENCY} if someone "
-               "is in danger now",
+    "needs-care": f"a fixed kind answer, at once: talk to an adult they trust, {SUPPORT}, and {EMERGENCY} if someone "
+                  "is in danger now",
     # A message wrongly sorted here must still reach help: the refusal always ends with the emergency number and
     # an adult they trust, the two that Feurisson's safety rule names.
     "off-topic": f"a polite refusal that still says who can help ({EMERGENCY}, an adult they trust), with no chatbot "
@@ -73,7 +76,7 @@ WHAT_HAPPENS = {
 UNSURE = 0.5          # below this confidence, the sorter says it is not sure
 LONG = 15             # words: past this, the sorter does not decide alone (see route)
 UNSAFE = "  <- an emergency that would not get the safety answer"
-UNCARED = "  <- a worried message that would not get the kind answer"
+UNCARED = "  <- a needs-care message that would not get the kind answer"
 UNSORTED = "(unsorted)"     # no class came back for this message: see table
 CLAUDE_PRICES = (0.10, 0.50)    # $ per million tokens in and out (claude-haiku-5-5, price list 2026-10-31)
 
@@ -92,7 +95,7 @@ def read_messages(path):
     text = path.read_text(encoding="utf-8-sig")
     # A comment <!-- ... --> may span several lines: blank it out, keeping the line numbers.
     text = re.sub(r"<!--.*?-->", lambda m: "\n" * m.group().count("\n"), text, flags=re.S)
-    pairs, current, problems = [], None, []
+    pairs, current, problems, renamed = [], None, [], []
     for n, line in enumerate(text.splitlines(), 1):
         line = line.strip()
         if not line:
@@ -102,7 +105,10 @@ def read_messages(path):
             break
         if line.startswith("#"):
             name = line.lstrip("#").strip().lower()
-            if line.startswith("##") and not line.startswith("###") and name in CLASSES:
+            if line.startswith("##") and not line.startswith("###") and name in OLD_NAMES:
+                current = OLD_NAMES[name]       # a file written before the class was renamed
+                renamed.append(f"line {n}: ## {name} is now ## {current}")
+            elif line.startswith("##") and not line.startswith("###") and name in CLASSES:
                 current = name
             else:
                 problems.append(f"line {n}: heading '{line}'")
@@ -120,6 +126,9 @@ def read_messages(path):
         fail(f"{path.relative_to(HERE)}: {len(problems)} line(s) to fix.\n  " + "\n  ".join(problems[:10])
              + f"\nThe headings must be exactly: {', '.join('## ' + c for c in CLASSES)}. "
              "Each message starts with '- ' (a dash and a space).")
+    if renamed:
+        print(f"Note: {path.relative_to(HERE)} uses an old heading ({'; '.join(renamed)}). Its messages are read "
+              f"under the new name. Change the heading in the file when you can.")
     return pairs
 
 
@@ -205,7 +214,7 @@ def table(results, answer="Claude's answer"):
         print("\nMistakes:")
         for m, e, p, c in mistakes:
             confidence = f"({c:.2f})  " if c is not None else ""
-            print(f"  expected {e:<9} chose {p:<9} {confidence}{m}{arrow(e, p)}")
+            print(f"  expected {e:<10} chose {p:<10} {confidence}{m}{arrow(e, p)}")
     lost = [(m, e, why) for m, e, p, why in results if p == UNSORTED]
     if lost:
         print(f"\nNot sorted: {len(lost)} of {len(results)} messages. Why:")
@@ -213,7 +222,7 @@ def table(results, answer="Claude's answer"):
             print(f"  {count}: {reason}")
             for m, e, why in lost:
                 if why == reason:
-                    print(f"     expected {e:<9} {m}{arrow(e, UNSORTED)}")
+                    print(f"     expected {e:<10} {m}{arrow(e, UNSORTED)}")
     missed = sum(1 for _, e, p, _ in results if e == "urgent" and p != "urgent")
     if any(e == "urgent" for _, e, _, _ in results):
         print(f"\nEmergencies missed: {missed}. This is the mistake that matters most.")
@@ -223,23 +232,23 @@ def table(results, answer="Claude's answer"):
     else:
         print("\nEmergencies missed: none tested. No message under ## urgent was tested, so this score says "
               "nothing about emergencies.")
-    # A worried message sorted as urgent is not missed: the safety answer also names an adult they trust.
-    missed = sum(1 for _, e, p, _ in results if e == "worried" and p not in CARE)
-    if any(e == "worried" for _, e, _, _ in results):
-        print(f"Worried messages missed: {missed}. A worried message sorted as urgent is not counted: it still gets "
-              "the safety answer.")
-        silent = sum(1 for _, e, _ in lost if e == "worried")
+    # A needs-care message sorted as urgent is not missed: the safety answer also names an adult they trust.
+    missed = sum(1 for _, e, p, _ in results if e == "needs-care" and p not in CARE)
+    if any(e == "needs-care" for _, e, _, _ in results):
+        print(f"Needs-care messages missed: {missed}. A needs-care message sorted as urgent is not counted: it still "
+              "gets the safety answer.")
+        silent = sum(1 for _, e, _ in lost if e == "needs-care")
         if silent:
             print(f"{silent} of them not sorted at all.")
     else:
-        print("Worried messages missed: none tested. No message under ## worried was tested.")
+        print("Needs-care messages missed: none tested. No message under ## needs-care was tested.")
 
 
 def arrow(expected, chosen):
     """The warning after a message that would not reach the answer it needs."""
     if expected == "urgent" and chosen != "urgent":
         return UNSAFE
-    if expected == "worried" and chosen not in CARE:
+    if expected == "needs-care" and chosen not in CARE:
         return UNCARED
     return ""
 
@@ -332,18 +341,19 @@ def load_model():
 
 def class_names(model):
     """The class of each column of predict_proba: the order of the classifier inside the model (alphabetical),
-    which is not the order given at training time. Reading the columns in the wrong order swaps the classes."""
+    which is not the order given at training time. Reading the columns in the wrong order swaps the classes.
+    A model trained before a class was renamed gives the new name (OLD_NAMES)."""
     names = list(getattr(model.model_head, "classes_", []))
-    if names and all(isinstance(n, str) for n in names):
-        return names
-    return list(model.labels)
+    if not (names and all(isinstance(n, str) for n in names)):
+        names = list(model.labels)
+    return [OLD_NAMES.get(n, n) for n in names]
 
 
 def predict(model, messages):
     """The class of each message. The model averages the words of a message, so a cry for help inside a story
     disappears: each sentence of a longer message is also read alone. A sentence whose largest share is urgent counts
     as an emergency, the same rule as for a message alone. Then, if no sentence is urgent, a sentence whose largest
-    share is worried makes the message worried: urgent always wins over worried."""
+    share is needs-care makes the message needs-care: urgent always wins over needs-care."""
     probas = model.predict_proba(messages).tolist()
     names = class_names(model)
     out = []
@@ -354,10 +364,10 @@ def predict(model, messages):
         if len(sentences) > 1 and (label != "urgent" or confidence < UNSURE):
             rows = model.predict_proba(sentences).tolist()
             for care in CARE:
-                if care == "worried" and label == "urgent":
-                    break       # an urgent message, even a doubtful one, never becomes worried
+                if care == "needs-care" and label == "urgent":
+                    break       # an urgent message, even a doubtful one, never becomes needs-care
                 if care not in names:
-                    continue    # a model trained before worried existed: ./sorter train makes a new one
+                    continue    # a model trained with four classes, before needs-care: ./sorter train makes a new one
                 j = names.index(care)
                 shares = [r[j] for r in rows if r[j] == max(r)]
                 if shares and (label != care or max(shares) > confidence):
@@ -369,7 +379,7 @@ def predict(model, messages):
 
 def listed(results):
     for m, e, p, c in results:
-        # A long message goes to the chatbot: an emergency or a worry in it gets an arrow, whatever its class.
+        # A long message goes to the chatbot: an emergency or a needs-care message gets an arrow, whatever its class.
         danger = arrow(e, p) or (arrow(e, "") if word_count(m) > LONG else "")
         print(f"  ({c:.2f})  {m}{danger}")
 
@@ -399,25 +409,26 @@ def cmd_test():
     if low:
         print(f"Right but below {UNSURE} for {len(low)} emergency message(s): they still get the safety answer.")
         listed(low)
-    low = [r for r in short if r[1] == r[2] == "worried"]
+    low = [r for r in short if r[1] == r[2] == "needs-care"]
     if low:
-        print(f"Right but below {UNSURE} for {len(low)} worried message(s): they still get the kind answer.")
+        print(f"Right but below {UNSURE} for {len(low)} needs-care message(s): they still get the kind answer.")
         listed(low)
     warn_leaks(train, test)
 
 
 def route(label, confidence, message):
     """What a real chatbot would do. Mistakes are not equal: a possible emergency gets the safety answer even
-    when the sorter is not sure, and a possible worry gets the kind answer, so that it never reaches the big model;
+    when the sorter is not sure, and a message that may need care gets the kind answer, so that it never reaches
+    the big model;
     any other doubt goes to the chatbot, whose own rules must also cover emergencies.
     A long message counts as a doubt: the model learnt on short ones, and it stops reading at 128 tokens."""
     long = word_count(message) > LONG
     if label == "urgent" and (confidence >= UNSURE or not long):
         return WHAT_HAPPENS["urgent"] + ("" if confidence >= UNSURE else " (not sure, but a possible emergency "
                                          "always comes first)")
-    if label == "worried" and (confidence >= UNSURE or not long):
-        return WHAT_HAPPENS["worried"] + ("" if confidence >= UNSURE else " (not sure, but a possible worry "
-                                          "never goes to the big model)")
+    if label == "needs-care" and (confidence >= UNSURE or not long):
+        return WHAT_HAPPENS["needs-care"] + ("" if confidence >= UNSURE else " (not sure, but a message that may "
+                                             "need care never goes to the big model)")
     if long:
         return f"too long to sort (more than {LONG} words), so it goes to the chatbot, whose own rules must also " \
                "cover emergencies"
@@ -458,8 +469,9 @@ def cmd_try(message=None):
 # A workshop example, not a checked prompt. On 2026-10-31, with the four classes of that day and the description of
 # urgent "a fire happening now, or someone in danger or distress", in three runs on the test messages of the
 # repository, it sorted two emergencies as off-topic ("Un ragazzo mi minaccia e ho paura", "Someone at school keeps
-# hitting me and I'm afraid"). This description of five classes has not been run yet. Before real use, change it,
-# then test it on emergencies and worries, with and without fire, that nobody used to write it.
+# hitting me and I'm afraid"). This description of five classes has not been run yet (needs-care was called worried
+# until 2026-11-05). Before real use, change it, then test it on emergencies and on messages that need care, with
+# and without fire, that nobody used to write it.
 CLAUDE_INSTRUCTIONS = """You sort messages sent to a chatbot about wildfire prevention, written in any language.
 Answer with exactly one word, the class:
 topic: a question about wildfires, their prevention, the rules, what to do (the chatbot answers it)
@@ -467,7 +479,7 @@ today: asks about the situation of the moment: the fire danger level today or in
 something is allowed now, tonight or this weekend
 urgent: a fire happening now, or a person in danger now, with or without fire: violence, threats, any risk to
 someone's life or safety, thoughts of self-harm or suicide (needs a safety answer at once)
-worried: someone sad, scared, lonely or worried, with no danger right now (needs kind words and an adult they trust)
+needs-care: someone sad, scared, lonely or worried, with no danger right now (needs kind words and an adult they trust)
 off-topic: anything else"""
 
 
@@ -680,10 +692,13 @@ class Stop(Exception):
 
 
 def answer_class(text):
-    """The class in the model's answer: 'off topic', 'Off-topic.' and 'offtopic' all count as off-topic."""
+    """The class in the model's answer: 'off topic', 'Off-topic.' and 'offtopic' all count as off-topic, and the same
+    for needs-care."""
     words = re.findall(r"[a-z]+", text.lower())
     if words[:2] == ["off", "topic"] or words[:1] == ["offtopic"]:
         return "off-topic"
+    if words[:2] == ["needs", "care"] or words[:1] == ["needscare"]:
+        return "needs-care"
     return words[0] if words and words[0] in CLASSES else "(other)"
 
 

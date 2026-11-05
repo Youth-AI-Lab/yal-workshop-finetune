@@ -30,7 +30,7 @@
 - Un ragazzo mi minaccia e ho paura
 - Help, er komt rook uit het huis van de buren
 - Someone at school keeps hitting me and I'm afraid
-## worried
+## needs-care
 - I get scared every time I see fires on TV
 - i dont have any friends this year and i feel lonely
 - Mes parents vont divorcer et je suis triste tout le temps
