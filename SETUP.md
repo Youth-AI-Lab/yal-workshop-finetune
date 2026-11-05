@@ -85,7 +85,9 @@ of the [OpenCode guide](https://github.com/Youth-AI-Lab/yal-opencode-guide).
 questions, typed by an adult in the Codespace, or a chatbot of the
 [Open WebUI guide](https://github.com/Youth-AI-Lab/yal-openwebui-guide) shared with a group and paid
 with an OpenRouter key (the young people type in the chatbot, in their browser, not in the
-Codespace). Then, before you start anything else, type:
+Codespace). In both cases, the young people's words go to OpenRouter and to the company that runs
+the model, even when an adult types them. So no names and no personal details, and use `--europe`.
+Before you start anything else, type:
 
 ```bash
 workshop-login --europe
