@@ -70,6 +70,12 @@ model. A pair with another key compares its own columns only, and its totals onl
 uses the same model: `score` writes the model under the table, and warns when two columns used
 different models.
 
+**What we saw with the default model.** The commands of one pair for workshops 1 to 5, played once
+with `deepseek/deepseek-v4-flash` on 2026-11-05 (image 2026.11.4, in a container, not a Codespace, no
+group), cost about $0.12 in the terminal: a pair that asks more questions spends more. In mode bare,
+3 answers of 11 were a tool call written as text (`<｜DSML｜tool_calls>`) instead of an answer. In Open
+WebUI, on a laptop, the chatbot answered a rumour asked in English in French (one try).
+
 To go further: the [OpenRouter guide](https://github.com/Youth-AI-Lab/yal-openrouter-guide), and
 [Part 2 - What OpenCode does, compared with Claude Code](https://github.com/Youth-AI-Lab/yal-opencode-guide#part-2---what-opencode-does-compared-with-claude-code)
 of the [OpenCode guide](https://github.com/Youth-AI-Lab/yal-opencode-guide).
@@ -455,8 +461,7 @@ key, then ask the facilitator.
 
 **`replay` takes a long time.** - Each question is a new conversation. You can go on working in
 your other terminal. If time is short, the facilitator may ask you to replay only some
-questions, for example `replay A 7 9`. With `deepseek/deepseek-v4-flash`, 11 questions took 3 to
-4.5 minutes per `replay` in modes bare, C, D and E (one test).
+questions, for example `replay A 7 9`. With `deepseek/deepseek-v4-flash`, 11 questions took 2 to 4.5 minutes per `replay` in modes bare, C, D and E (two tests).
 
 **`Docker is not available here, and Open WebUI needs it.`** - In a Codespace, Docker starts a
 few seconds after the Codespace: wait one minute and type `openwebui start` again. On your own
