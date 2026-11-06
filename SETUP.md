@@ -331,7 +331,7 @@ Each word is explained again the first time a workshop uses it.
 |---|---|
 | **Kit** | The repository with everything the first five workshops use, in one place: [yal-workshop-kit](https://github.com/Youth-AI-Lab/yal-workshop-kit). Each workshop has its own repository, with only what it needs. |
 | **Model** | A program whose behaviour comes from numbers found by training. In workshops 1 to 5, Claude Sonnet writes the answers with an Anthropic key, and `deepseek/deepseek-v4-flash` with an OpenRouter key: the same for every pair with that kind of key. In workshop 6, a small model chooses a class. |
-| **Context** (or **context window**) | Everything the model reads before it answers. It has a maximum size: here, 200,000 tokens at most. |
+| **Context** | Everything the model reads before it answers. It has a maximum size, the **context window**: here, 200,000 tokens at most. |
 | **Token** | The unit used to measure text for a model: a piece of a word. On average, 4 characters of English text. [What a token really is](https://github.com/Youth-AI-Lab/yal-local-ai-guide/blob/main/how-an-llm-works.md#what-a-token-really-is). |
 | **System prompt** | Instructions the model reads at the start of every conversation: who it is, its rules. |
 | **Judge** | A model that scores an answer with the same rules as you: a smaller one with an Anthropic key, `deepseek/deepseek-v4-flash` with an OpenRouter key. It can be wrong too. |

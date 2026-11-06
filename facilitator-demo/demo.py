@@ -23,7 +23,10 @@ Keep demo.py, sorter_router.py and sorter_answers.py in the same folder.
 # - only the files a sentence-transformers model needs are copied (safetensors, no .bin);
 # - no log of the messages (valve log_path empty, checked);
 # - the filter is global during the demo: the base model (hidden, but reachable by its name), "Wildfire RAG"
-#   and any other chatbot go through the sorter too;
+#   when this Open WebUI has one (not in the repository of workshop 6: no documents) and any other chatbot go
+#   through the sorter too;
+# - the demo chatbot is built on the hidden base model that openwebui start always sets up (plain_model() of
+#   the kit), with its settings for the provider (OpenRouter's data rule);
 # - stop removes the functions, the models, the conversations with the demo chatbot and the copied files, then
 #   checks.
 #
@@ -335,15 +338,28 @@ def preview(numbers):
     return rows
 
 
+def base_model(api):
+    """The record of the hidden base model that openwebui start always sets up: the model of the key, as the
+    container offers it (OPENAI_API_CONFIGS, kit mode: one model), saved with no base_model_id. Since image
+    2026.11.6, openwebui start makes no "Wildfire RAG" model in a repository without documents (workshop 6)."""
+    try:
+        offered = json.loads(os.environ["OPENAI_API_CONFIGS"])["0"]["model_ids"]
+    except (KeyError, TypeError, ValueError):
+        offered = []
+    for model_id in offered:
+        record = api.model_record(model_id)
+        if record and not record.get("base_model_id") and (record.get("meta") or {}).get("hidden"):
+            return record
+    fail("No hidden base model in this Open WebUI yet. Type openwebui start, then python3 demo.py start again.")
+
+
 def inside_start(options):
     options = json.loads(options)
     api = Api()
     version = api.call("GET", "/api/version").get("version")
     if version not in VERSIONS:
         fail(f"This demo was tried with Open WebUI {' and '.join(VERSIONS)} only, and this one is {version}.")
-    rag = api.model_record("wildfire-rag")
-    if not rag or not rag.get("base_model_id"):
-        fail('No "Wildfire RAG" model in this Open WebUI. Type openwebui start, then python3 demo.py start again.')
+    base = base_model(api)
     put_function(api, ANSWERS, "Sorter fixed answers (prototype)", "PROTOTYPE of workshop 6: the fixed answers.")
     put_function(api, ROUTER, "Message sorter (prototype)", "PROTOTYPE of workshop 6: sorts each message first.")
     answers = set_valves(api, ANSWERS, {k: options[k] for k in ("emergency", "support") if options.get(k)})
@@ -361,10 +377,10 @@ def inside_start(options):
         api.save_model({"id": model_id, "base_model_id": None, "name": model_id, "is_active": True,
                         "meta": {"hidden": True}, "params": {}})
     params = {"system": SYSTEM, "function_calling": "legacy"}
-    if (rag.get("params") or {}).get("custom_params"):
-        params["custom_params"] = rag["params"]["custom_params"]   # OpenRouter's data rule, as the kit sets it
+    if (base.get("params") or {}).get("custom_params"):
+        params["custom_params"] = base["params"]["custom_params"]   # OpenRouter's data rule, as the kit sets it
     api.save_model({
-        "id": CHATBOT, "base_model_id": rag["base_model_id"], "name": CHATBOT_NAME, "is_active": True,
+        "id": CHATBOT, "base_model_id": base["id"], "name": CHATBOT_NAME, "is_active": True,
         "meta": {"description": "PROTOTYPE of workshop 6: a small fine-tuned model sorts each message before "
                                 "the chatbot. Not a tool for a real service.",
                  "filterIds": [ROUTER],

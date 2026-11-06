@@ -1029,6 +1029,12 @@ writes new invented examples that show the same pattern, then the model is train
 from young people do not become examples, even with names removed. And the method works for any
 short list of classes, in any of the model's languages: the kind of question, the topic, the tone.
 
+> 💡 **Tip.** **To go further.** The [Local AI guide](https://github.com/Youth-AI-Lab/yal-local-ai-guide)
+> (a model on a machine of your organisation), its page
+> [how an LLM works](https://github.com/Youth-AI-Lab/yal-local-ai-guide/blob/main/how-an-llm-works.md), and the
+> [Open WebUI guide](https://github.com/Youth-AI-Lab/yal-openwebui-guide) (the chatbot a sorter would sit
+> before).
+
 ### Step 2 - Keep your examples
 
 `workshop-save` keeps `messages/`, your examples and your test. It does not keep `SETUP.md`, `sheet.md`

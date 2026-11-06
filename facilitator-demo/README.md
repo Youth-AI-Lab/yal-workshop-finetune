@@ -6,7 +6,9 @@ screen in Part 6. It is there to make the room think about well-being, private d
 "Why think about routing" in the [workshop page](../README.md#why-think-about-routing)). It is not a
 tool for a real service.
 
-> 🚫 **Warning.** **Never use it with young people.** The fixed answers were written for a
+> 🚫 **Warning.** **Never let young people type into it or use it as a real chatbot.** You may show
+> it to them on your screen, as in Part 6, to make them think about routing, but leave out message 7
+> and any message about wanting to die. The fixed answers were written for a
 > demonstration: no child protection professional has checked them. The sorter makes mistakes, so it
 > is not a safety net. A real service needs a separately tested emergency path, and a person who
 > takes over.
@@ -39,8 +41,9 @@ workshop 6 ("During Part 6").
 
 ## What it does, and what it never does
 
-While the demo runs, the sorter sits in front of **every** model of your Open WebUI, "Wildfire RAG"
-included. An emergency, a message that needs care and a message the sorter is sure is off-topic get a
+While the demo runs, the sorter sits in front of **every** model of your Open WebUI, the hidden base
+model included (the model of your key, which `openwebui start` hides from the list). The demo chatbot is
+built on that base model. An emergency, a message that needs care and a message the sorter is sure is off-topic get a
 fixed answer, and never reach the big model. The other messages go to the chatbot: a paid call with
 your key. If the sorter fails, the answer is the fixed "The message sorter is not working…", never the
 chatbot.
@@ -59,7 +62,10 @@ nothing is left.
 > of the kit, and stops on any other. It was tried on 2026-11-04, 2026-11-05 (0.12.4) and 2026-11-06 (0.12.5),
 > without network, with a fake model, a fake key, the real `openwebui start` of the kit and Chrome without
 > a screen. In the last two runs: 49 messages sorted as `./sorter` sorts them, the messages with a fixed answer never sent to the
-> model, nothing left after `stop`. It was not tried in a real Codespace, with a real model, or with a group.
+> model, nothing left after `stop`. Since image 2026.11.6, `openwebui start` makes no "Wildfire RAG" model in
+> this repository (it has no documents), so the demo chatbot is built on the hidden base model: tried again
+> that way on 2026-11-06 (0.12.5 only), same results. It was not tried in a real Codespace, with a real model,
+> or with a group.
 
 ## Licence
 
