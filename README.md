@@ -165,6 +165,7 @@ All of these are in your Codespace, in the file list on the left:
 - `sorter`: the command of the day (type `./sorter` to see what it can do).
 - `tools/sorter.py`: the program behind it, about 850 lines of Python, if you are curious.
 - `SETUP.md`: setup and common problems of the whole series.
+- `facilitator-demo/`: the prototype the facilitator shows in Part 6. You do not need it today.
 
 ---
 

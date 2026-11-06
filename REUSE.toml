@@ -9,14 +9,14 @@ SPDX-PackageDownloadLocation = "https://github.com/Youth-AI-Lab/yal-workshop-kit
 # example chatbots, the skills and the messages of workshop 6: CC BY-SA 4.0. The screenshots show the interfaces of Claude Code,
 # Open WebUI, VS Code and GitHub, which belong to their authors.
 [[annotations]]
-path = ["README.md", "sheet.md", "SETUP.md", "AGENTS.md", "CLAUDE.md", "scores.md", "test-questions.md", "examples/**", "summaries/**", "images/**", ".claude/skills/**", ".workshop/**", "corpus/index.md", "corpus/SOURCES.md", "inbox/README.md", "messages/**"]
+path = ["README.md", "sheet.md", "SETUP.md", "AGENTS.md", "CLAUDE.md", "scores.md", "test-questions.md", "examples/**", "summaries/**", "images/**", ".claude/skills/**", ".workshop/**", "corpus/index.md", "corpus/SOURCES.md", "inbox/README.md", "messages/**", "facilitator-demo/README.md"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Youth AI Lab partners"
 SPDX-License-Identifier = "CC-BY-SA-4.0"
 
-# Configuration files and programs (the sorter of workshop 6 included): EUPL-1.2, as in the guides of the project.
+# Configuration files and programs (the sorter of workshop 6 and its facilitator demo included): EUPL-1.2, as in the guides of the project.
 [[annotations]]
-path = [".devcontainer/**", ".github/**", ".vscode/**", ".gitattributes", ".gitignore", ".mcp.json", ".mcp.weather.json", "mcp/**", "REUSE.toml", "sorter", "tools/**"]
+path = [".devcontainer/**", ".github/**", ".vscode/**", ".gitattributes", ".gitignore", ".mcp.json", ".mcp.weather.json", "mcp/**", "REUSE.toml", "sorter", "tools/**", "facilitator-demo/*.py"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Youth AI Lab partners"
 SPDX-License-Identifier = "EUPL-1.2"
